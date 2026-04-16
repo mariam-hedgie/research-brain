@@ -40,10 +40,21 @@ export interface ChatRequest {
   history?: ChatMessage[];
 }
 
+export interface MatchedContextSource extends ContextSource {
+  match_score: number;
+}
+
 export interface ChatResponse {
-  reply: string;
-  usedSources: ContextSource[];
-  worker: WorkerDecision;
+  answer: string;
+  current_status: string;
+  blockers: string[];
+  recommended_next_step: string;
+  why_this_follows: string[];
+  worker_type: WorkerDecision["worker_type"];
+  worker_reason: string;
+  suggested_skill: string | null;
+  matched_sources: MatchedContextSource[];
+  follow_up_questions: string[];
 }
 
 export interface NextStepRequest {

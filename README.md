@@ -48,6 +48,16 @@ Research Brain uses a simple deterministic router in `lib/routing/decideWorker.t
 
 The current version uses readable keyword rules so it is easy to inspect and extend. Later, the same output shape can be preserved while replacing the rule logic with model-based classification.
 
+## Grounded Chat Response Flow
+
+The chat API in `app/api/chat/route.ts` does not call an LLM. Instead, it builds a deterministic project-aware response from three local inputs:
+
+- the project context bundle from `deriveProjectContextBundle(projectId)`
+- matched local sources from `lib/retrieval/search.ts`
+- the chat-versus-codex decision from `lib/routing/decideWorker.ts`
+
+The response includes the current status, blockers, one recommended next step, why that recommendation follows from stored memory, the suggested worker type, the suggested skill, matched local sources, and follow-up questions. If source matching is weak, the response says so explicitly instead of pretending the evidence is stronger than it is.
+
 ## Getting Started
 
 ```bash

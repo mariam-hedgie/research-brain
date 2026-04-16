@@ -47,7 +47,7 @@ export function ChatPanel({ project }: ChatPanelProps) {
       }
 
       const data = (await response.json()) as ChatResponse;
-      setMessages((current) => [...current, { role: "assistant", content: data.reply }]);
+      setMessages((current) => [...current, { role: "assistant", content: data.answer }]);
     } catch (submissionError) {
       setError(submissionError instanceof Error ? submissionError.message : "Unknown error");
     } finally {

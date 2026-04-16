@@ -128,3 +128,13 @@ export async function deriveProjectContextBundle(projectId: string): Promise<Pro
     contextSources: project.contextSources,
   };
 }
+
+export async function getLatestEpisodicMemory(projectId: string): Promise<EpisodicMemoryEntry | null> {
+  const bundle = await deriveProjectContextBundle(projectId);
+
+  if (!bundle || bundle.recentEpisodes.length === 0) {
+    return null;
+  }
+
+  return bundle.recentEpisodes[bundle.recentEpisodes.length - 1] ?? null;
+}
