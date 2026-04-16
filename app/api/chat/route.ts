@@ -21,7 +21,9 @@ export async function POST(request: Request) {
         ? `Relevant context includes "${usedSources[0].title}".`
         : "No highly relevant sources were matched from local context yet."
     } The next recommended step is "${project.memory.action.recommendedNextStep}". ${
-      worker.target === "codex" ? "This looks like a Codex handoff candidate." : "This fits a planning/explanation response."
+      worker.worker_type === "codex"
+        ? "This looks like a Codex handoff candidate."
+        : "This fits a planning/explanation response."
     }`,
     usedSources,
     worker,

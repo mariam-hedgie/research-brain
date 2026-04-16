@@ -38,6 +38,16 @@ The memory helpers in `lib/memory/memoryStore.ts` expose a small interface that 
 - Retrieval over project-attached local context
 - Chat and routing behavior mocked from current project state
 
+## How Research Brain decides between Chat and Codex
+
+Research Brain uses a simple deterministic router in `lib/routing/decideWorker.ts`.
+
+- Requests about planning, explanation, literature connection, and prioritization go to `chat`.
+- Requests about implementation, bug fixing, refactoring, or direct code changes go to `codex`.
+- The router returns a typed decision with `worker_type`, `confidence`, `reason`, `suggested_context_sources`, and `suggested_skill`.
+
+The current version uses readable keyword rules so it is easy to inspect and extend. Later, the same output shape can be preserved while replacing the rule logic with model-based classification.
+
 ## Getting Started
 
 ```bash

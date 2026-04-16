@@ -65,8 +65,11 @@ export interface RouterRequest {
 }
 
 export interface WorkerDecision {
-  target: "chat" | "codex";
+  worker_type: "chat" | "codex";
+  confidence: number;
   reason: string;
+  suggested_context_sources: string[];
+  suggested_skill: string | null;
 }
 
 export interface RouterResponse {

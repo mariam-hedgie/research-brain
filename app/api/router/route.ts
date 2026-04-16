@@ -4,10 +4,15 @@ import type { RouterRequest, RouterResponse } from "@/lib/types";
 
 export async function POST(request: Request) {
   const body = (await request.json()) as RouterRequest;
+
+  if (!body.userGoal?.trim()) {
+    return NextResponse.json({ error: "userGoal is required." }, { status: 400 });
+  }
+
   const decision = decideWorker(body.userGoal);
 
   const response: RouterResponse = { decision };
 
-  // TODO: Replace this heuristic router with one that considers project state, available tools, and execution risk.
+  // TODO: Replace deterministic keyword matching with a model-based classifier that also considers project state.
   return NextResponse.json(response);
 }
