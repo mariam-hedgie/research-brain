@@ -78,8 +78,40 @@ Research Brain uses a deterministic local-only ranker in `lib/retrieval/search.t
 - paper-, note-, and code-shaped questions get source-type relevance boosts
 - newer sources receive a modest recency bonus when `updatedAt` is available
 - blocker and next-step terms from project memory add extra weight when the query overlaps them
+- retrieval now searches real local artifact chunks from `data/notes/`, `data/papers/`, and `data/code_summaries/`
+- project memory fields are also chunked and searched
+- `contextSources` from `projects.json` are only used as fallback when artifact and memory evidence is thin
 
-Each ranked result returns `title`, `source_type`, `project`, `date`, `snippet`, and `score`. The goal is not perfect search; the goal is convincing project-aware retrieval for the MVP demo while keeping the ranking logic readable enough to swap later for embedding-based retrieval.
+Each ranked result returns `title`, `source_type`, `project`, `date`, `filepath`, `snippet`, and `score`. The goal is not perfect search; the goal is convincing project-aware retrieval for the MVP demo while keeping the ranking logic readable enough to swap later for embedding-based retrieval.
+
+## Local Artifact Format
+
+Research Brain expects text-based local artifacts in these folders:
+
+- `data/notes/`
+- `data/papers/`
+- `data/code_summaries/`
+
+Each file should start with a simple metadata header followed by a blank line and then the document body:
+
+```text
+projectId: graph-retrieval
+title: Weekly retrieval log
+date: 2026-04-15
+
+Body text starts here.
+```
+
+Required metadata:
+
+- `projectId`
+- `title`
+
+Optional metadata:
+
+- `date`
+
+The loader reads these files locally, chunks the body into retrievable passages, and exposes real snippets during search and grounded chat responses.
 
 ## What the user sees in a grounded Research Brain response
 

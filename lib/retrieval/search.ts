@@ -1,7 +1,13 @@
 import { getProjectById } from "@/lib/db";
-import { deriveProjectRetrievalProfile } from "@/lib/memory/memoryStore";
-import { sourceToChunk } from "@/lib/retrieval/chunk";
-import type { MatchedContextSource } from "@/lib/types";
+import { deriveProjectContextBundle, deriveProjectRetrievalProfile } from "@/lib/memory/memoryStore";
+import {
+  artifactToChunks,
+  loadArtifactDocuments,
+  memoryFieldToChunk,
+  sourceToChunk,
+  type RetrievalChunk,
+} from "@/lib/retrieval/chunk";
+import type { MatchedContextSource, RetrievalSourceType } from "@/lib/types";
 
 function tokenizeText(text: string): string[] {
   return Array.from(
@@ -19,7 +25,7 @@ function countOverlap(queryTokens: string[], candidateTokens: string[]): number 
   return queryTokens.filter((token) => candidateSet.has(token)).length;
 }
 
-function getSourceTypeBoost(query: string, sourceType: MatchedContextSource["source_type"]): number {
+function getSourceTypeBoost(query: string, sourceType: RetrievalSourceType): number {
   const normalized = query.toLowerCase();
 
   if ((normalized.includes("paper") || normalized.includes("literature")) && sourceType === "paper") {
@@ -41,14 +47,11 @@ function getSourceTypeBoost(query: string, sourceType: MatchedContextSource["sou
     return 5;
   }
 
-  return 0;
-}
+  if ((normalized.includes("memory") || normalized.includes("status") || normalized.includes("goal")) && sourceType === "memory") {
+    return 3;
+  }
 
-function getProjectMatchBoost(query: string, projectName: string): number {
-  const normalized = query.toLowerCase();
-  const projectTokens = tokenizeText(projectName);
-  const tokenHit = projectTokens.some((token) => normalized.includes(token));
-  return tokenHit ? 4 : 2;
+  return 0;
 }
 
 function getRecencyScore(date: string | null): number {
@@ -85,108 +88,241 @@ function getRecencyScore(date: string | null): number {
 
 function getActionKeywordBoost(params: {
   queryTokens: string[];
-  sourceTokens: string[];
+  chunkTokens: string[];
   blockers: string[];
   nextStep: string;
 }): number {
   const blockerTokens = tokenizeText(params.blockers.join(" "));
   const nextStepTokens = tokenizeText(params.nextStep);
-  const blockerOverlap = countOverlap(params.queryTokens, blockerTokens);
-  const nextStepOverlap = countOverlap(params.queryTokens, nextStepTokens);
-  const sourceBlockerSupport = countOverlap(params.sourceTokens, blockerTokens);
-  const sourceNextStepSupport = countOverlap(params.sourceTokens, nextStepTokens);
 
-  return blockerOverlap * Math.min(sourceBlockerSupport, 2) * 2 + nextStepOverlap * Math.min(sourceNextStepSupport, 2) * 2;
+  return (
+    countOverlap(params.queryTokens, blockerTokens) * Math.min(countOverlap(params.chunkTokens, blockerTokens), 2) * 2 +
+    countOverlap(params.queryTokens, nextStepTokens) * Math.min(countOverlap(params.chunkTokens, nextStepTokens), 2) * 2
+  );
 }
 
-function buildSnippet(summary: string, queryTokens: string[]): string {
-  const sentences = summary
-    .split(/(?<=[.!?])\s+/)
-    .map((sentence) => sentence.trim())
-    .filter(Boolean);
-
-  if (sentences.length === 0) {
-    return summary.slice(0, 160);
+function getRankSourceBoost(rankSource: RetrievalChunk["rankSource"]): number {
+  if (rankSource === "artifact") {
+    return 6;
   }
 
-  const rankedSentences = sentences
-    .map((sentence) => ({
-      sentence,
-      score: countOverlap(queryTokens, tokenizeText(sentence)),
-    }))
-    .sort((a, b) => b.score - a.score);
+  if (rankSource === "memory") {
+    return 3;
+  }
 
-  return rankedSentences[0]?.sentence ?? sentences[0];
+  return 0;
+}
+
+function buildMemoryChunks(params: {
+  projectId: string;
+  projectName: string;
+  contextBundle: NonNullable<Awaited<ReturnType<typeof deriveProjectContextBundle>>>;
+}): RetrievalChunk[] {
+  const { contextBundle, projectId, projectName } = params;
+  const chunks: RetrievalChunk[] = [
+    memoryFieldToChunk({
+      id: `${projectId}:canonical-description`,
+      projectId,
+      title: `${projectName} project description`,
+      body: contextBundle.canonical.description,
+    }),
+    memoryFieldToChunk({
+      id: `${projectId}:action-next-step`,
+      projectId,
+      title: `${projectName} next step`,
+      body: contextBundle.action.recommendedNextStep,
+    }),
+  ];
+
+  contextBundle.canonical.goals.forEach((goal, index) => {
+    chunks.push(
+      memoryFieldToChunk({
+        id: `${projectId}:goal-${index + 1}`,
+        projectId,
+        title: `${projectName} goal ${index + 1}`,
+        body: goal,
+      }),
+    );
+  });
+
+  contextBundle.action.blockers.forEach((blocker, index) => {
+    chunks.push(
+      memoryFieldToChunk({
+        id: `${projectId}:blocker-${index + 1}`,
+        projectId,
+        title: `${projectName} blocker ${index + 1}`,
+        body: blocker,
+      }),
+    );
+  });
+
+  contextBundle.recentEpisodes.forEach((episode, index) => {
+    chunks.push(
+      memoryFieldToChunk({
+        id: `${projectId}:episode-${index + 1}`,
+        projectId,
+        title: `${projectName} recent session ${index + 1}`,
+        body: [
+          ...episode.attempted,
+          ...episode.changed,
+          ...episode.failed,
+          ...episode.learned,
+          ...episode.filesTouched,
+        ].join(". "),
+        date: episode.date,
+      }),
+    );
+  });
+
+  return chunks;
+}
+
+function scoreChunk(params: {
+  query: string;
+  queryTokens: string[];
+  projectName: string;
+  chunk: RetrievalChunk;
+  blockers: string[];
+  nextStep: string;
+  goals: string[];
+  evaluationCriteria: string[];
+}): number {
+  const bodyTokens = tokenizeText(params.chunk.body);
+  const titleTokens = tokenizeText(params.chunk.title);
+  const goalsTokens = tokenizeText(params.goals.join(" "));
+  const evaluationTokens = tokenizeText(params.evaluationCriteria.join(" "));
+  const normalizedQuery = params.query.trim().toLowerCase();
+
+  let score =
+    countOverlap(params.queryTokens, titleTokens) * 5 +
+    countOverlap(params.queryTokens, bodyTokens) * 3 +
+    countOverlap(params.queryTokens, goalsTokens) * 2 +
+    countOverlap(params.queryTokens, evaluationTokens) * 2 +
+    getSourceTypeBoost(params.query, params.chunk.sourceType) +
+    getRecencyScore(params.chunk.date) +
+    getActionKeywordBoost({
+      queryTokens: params.queryTokens,
+      chunkTokens: bodyTokens,
+      blockers: params.blockers,
+      nextStep: params.nextStep,
+    }) +
+    getRankSourceBoost(params.chunk.rankSource);
+
+  const projectTokens = tokenizeText(params.projectName);
+  if (projectTokens.some((token) => normalizedQuery.includes(token))) {
+    score += 4;
+  } else {
+    score += 2;
+  }
+
+  if (normalizedQuery.length > 0 && params.chunk.body.toLowerCase().includes(normalizedQuery)) {
+    score += 6;
+  }
+
+  return score;
+}
+
+function dedupeAndFormatResults(params: {
+  ranked: Array<{ chunk: RetrievalChunk; score: number }>;
+  projectName: string;
+  limit: number;
+}): MatchedContextSource[] {
+  const seen = new Set<string>();
+  const results: MatchedContextSource[] = [];
+
+  for (const { chunk, score } of params.ranked) {
+    const key = `${chunk.title}:${chunk.filepath ?? chunk.id}:${chunk.snippet}`;
+
+    if (seen.has(key)) {
+      continue;
+    }
+
+    seen.add(key);
+    results.push({
+      title: chunk.title,
+      source_type: chunk.sourceType,
+      project: params.projectName,
+      date: chunk.date,
+      filepath: chunk.filepath,
+      snippet: chunk.snippet,
+      score,
+    });
+
+    if (results.length >= params.limit) {
+      break;
+    }
+  }
+
+  return results;
 }
 
 export async function searchProjectContext(projectId: string, query: string): Promise<MatchedContextSource[]> {
-  const [project, retrievalProfile] = await Promise.all([
+  const [project, contextBundle, retrievalProfile, artifactDocuments] = await Promise.all([
     getProjectById(projectId),
+    deriveProjectContextBundle(projectId),
     deriveProjectRetrievalProfile(projectId),
+    loadArtifactDocuments(),
   ]);
 
-  if (!project || !retrievalProfile) {
+  if (!project || !contextBundle || !retrievalProfile) {
     return [];
   }
 
-  const normalizedQuery = query.trim().toLowerCase();
   const queryTokens = tokenizeText(query);
-  const goalTokens = tokenizeText(retrievalProfile.goals.join(" "));
-  const evaluationTokens = tokenizeText(retrievalProfile.evaluationCriteria.join(" "));
+  const artifactChunks = artifactDocuments
+    .filter((document) => document.projectId === projectId)
+    .flatMap((document) => artifactToChunks(document));
+  const memoryChunks = buildMemoryChunks({
+    projectId,
+    projectName: project.name,
+    contextBundle,
+  });
+  const fallbackChunks = project.contextSources.map((source) => sourceToChunk(projectId, source));
 
-  const ranked = project.contextSources
-    .map((source) => {
-      const chunk = sourceToChunk(projectId, source);
-      const body = chunk.body.toLowerCase();
-      const titleTokens = tokenizeText(source.title);
-      const bodyTokens = tokenizeText(chunk.body);
-      const summaryTokens = tokenizeText(source.summary);
-
-      const titleOverlap = countOverlap(queryTokens, titleTokens);
-      const bodyOverlap = countOverlap(queryTokens, bodyTokens);
-      const summaryOverlap = countOverlap(queryTokens, summaryTokens);
-      const goalsOverlap = countOverlap(queryTokens, goalTokens);
-      const evaluationOverlap = countOverlap(queryTokens, evaluationTokens);
-
-      let score =
-        titleOverlap * 5 +
-        bodyOverlap * 2 +
-        summaryOverlap * 3 +
-        goalsOverlap * 2 +
-        evaluationOverlap * 2 +
-        getSourceTypeBoost(query, source.kind) +
-        getProjectMatchBoost(query, project.name) +
-        getRecencyScore(source.updatedAt) +
-        getActionKeywordBoost({
+  const scoreCandidates = (chunks: RetrievalChunk[]) =>
+    chunks
+      .map((chunk) => ({
+        chunk,
+        score: scoreChunk({
+          query,
           queryTokens,
-          sourceTokens: bodyTokens,
+          projectName: project.name,
+          chunk,
           blockers: retrievalProfile.blockers,
           nextStep: retrievalProfile.nextStep,
-        });
+          goals: retrievalProfile.goals,
+          evaluationCriteria: retrievalProfile.evaluationCriteria,
+        }),
+      }))
+      .filter(({ score }) => score > 0)
+      .sort((a, b) => b.score - a.score || (b.chunk.date ?? "").localeCompare(a.chunk.date ?? "") || a.chunk.title.localeCompare(b.chunk.title));
 
-      if (normalizedQuery.length > 0 && body.includes(normalizedQuery)) {
-        score += 6;
-      }
+  const primaryRanked = scoreCandidates([...artifactChunks, ...memoryChunks]);
 
-      return {
-        title: source.title,
-        source_type: source.kind,
-        project: project.name,
-        date: source.updatedAt ?? null,
-        snippet: buildSnippet(source.summary, queryTokens),
-        score,
-      };
-    })
-    .filter(({ score }) => score > 0)
-    .sort((a, b) => b.score - a.score || (b.date ?? "").localeCompare(a.date ?? "") || a.title.localeCompare(b.title));
+  if (primaryRanked.length >= 3) {
+    return dedupeAndFormatResults({
+      ranked: primaryRanked,
+      projectName: project.name,
+      limit: 3,
+    });
+  }
 
-  return ranked.slice(0, 3);
+  const fallbackRanked = scoreCandidates(fallbackChunks);
+
+  return dedupeAndFormatResults({
+    ranked: [...primaryRanked, ...fallbackRanked],
+    projectName: project.name,
+    limit: 3,
+  });
 }
 
-export function getRetrievalExamples(): Array<{ query: string; expectedTopSourceType: MatchedContextSource["source_type"] }> {
+export function getRetrievalExamples(): Array<{
+  query: string;
+  expectedTopSourceType: MatchedContextSource["source_type"];
+}> {
   return [
-    { query: "explain this paper and how it affects the project", expectedTopSourceType: "paper" },
-    { query: "what blocker is affecting the next step", expectedTopSourceType: "note" },
-    { query: "refactor the repo module for routing", expectedTopSourceType: "code_summary" },
+    { query: "what did the weekly retrieval note say about planning prompts", expectedTopSourceType: "note" },
+    { query: "which paper supports separating memory from planning context", expectedTopSourceType: "paper" },
+    { query: "what does the retriever prototype code summary say about ranking", expectedTopSourceType: "code_summary" },
   ];
 }

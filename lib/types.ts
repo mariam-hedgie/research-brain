@@ -1,6 +1,7 @@
 import type { ProjectMemoryRecord } from "@/lib/memory/schema";
 
 export type SourceKind = "note" | "paper" | "code_summary";
+export type RetrievalSourceType = SourceKind | "memory";
 
 export type ProjectStatus = "active" | "planning" | "blocked";
 
@@ -48,9 +49,10 @@ export type ChatQuestionMode =
 
 export interface MatchedContextSource {
   title: string;
-  source_type: SourceKind;
+  source_type: RetrievalSourceType;
   project: string;
   date: string | null;
+  filepath: string | null;
   snippet: string;
   score: number;
 }
