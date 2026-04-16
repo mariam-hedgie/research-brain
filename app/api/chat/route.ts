@@ -3,7 +3,7 @@ import { getProjectById } from "@/lib/db";
 import { deriveProjectContextBundle, getLatestEpisodicMemory } from "@/lib/memory/memoryStore";
 import { searchProjectContext } from "@/lib/retrieval/search";
 import { decideWorker } from "@/lib/routing/decideWorker";
-import type { ChatQuestionMode, ChatRequest, ChatResponse } from "@/lib/types";
+import type { AssistanceMode, ChatQuestionMode, ChatRequest, ChatResponse } from "@/lib/types";
 
 function classifyQuestionMode(message: string): ChatQuestionMode {
   const normalized = message.trim().toLowerCase();
@@ -128,6 +128,7 @@ function buildWhyThisFollows(params: {
 
 function buildModeSpecificAnswer(params: {
   mode: ChatQuestionMode;
+  assistanceMode: AssistanceMode;
   projectName: string;
   currentStatus: string;
   blockers: string[];
@@ -144,60 +145,153 @@ function buildModeSpecificAnswer(params: {
   suggestedSkill: string | null;
 }): string {
   const evidenceSentence = formatMatchedSources(params.matchedSources);
+  const primaryBlocker = params.blockers[0];
+  const primaryGoal = params.goals[0];
 
-  if (params.mode === "next_step") {
-    return [
-      `${params.projectName} is currently ${params.currentStatus}.`,
-      `The next step is ${params.recommendedNextStep}.`,
-      `Estimated time: about ${params.estimatedMinutes} minutes.`,
-      params.prerequisites.length > 0
-        ? `Prerequisites: ${params.prerequisites.join(", ")}.`
-        : "There are no stored prerequisites for this step.",
-      params.successCriteria.length > 0
-        ? `Success looks like: ${params.successCriteria.join("; ")}.`
-        : "There are no stored success criteria yet.",
-      evidenceSentence,
-    ].join(" ");
-  }
+  if (params.assistanceMode === "help") {
+    if (params.mode === "next_step") {
+      return [
+        `Next step: ${params.recommendedNextStep}.`,
+        `Time: about ${params.estimatedMinutes} minutes.`,
+        params.prerequisites.length > 0 ? `Before you start: ${params.prerequisites.join(", ")}.` : null,
+        params.successCriteria.length > 0 ? `Done when: ${params.successCriteria.join("; ")}.` : null,
+        evidenceSentence,
+      ]
+        .filter(Boolean)
+        .join(" ");
+    }
 
-  if (params.mode === "why_next_step") {
+    if (params.mode === "why_next_step") {
+      return [
+        primaryBlocker
+          ? `This step comes next because the main blocker is ${primaryBlocker}.`
+          : `This step comes next because it is the clearest actionable move in current project memory.`,
+        params.latestAttempt ? `Last attempt: ${params.latestAttempt}.` : null,
+        primaryGoal ? `It supports the goal "${primaryGoal}".` : null,
+        evidenceSentence,
+      ]
+        .filter(Boolean)
+        .join(" ");
+    }
+
+    if (params.mode === "worker_handoff") {
+      return [
+        `Use ${params.workerType === "codex" ? "Codex" : "Chat"} for this request.`,
+        params.workerReason,
+        params.suggestedSkill ? `Suggested skill: ${params.suggestedSkill}.` : null,
+        evidenceSentence,
+      ]
+        .filter(Boolean)
+        .join(" ");
+    }
+
     return [
-      `This is the next step because ${params.projectName} is trying to move from ${params.currentStatus} toward a concrete project milestone.`,
-      params.blockers.length > 0
-        ? `The strongest blocker is ${params.blockers[0]}, so the recommended step stays tightly scoped around that constraint.`
-        : "There is no stored blocker dominating the plan right now, so the next step follows the current action memory directly.",
-      params.latestAttempt ? `The latest recorded attempt was: ${params.latestAttempt}.` : null,
-      params.recentLearnings.length > 0 ? `Recent learning: ${params.recentLearnings[0]}.` : null,
-      params.goals.length > 0 ? `It also supports the project goal "${params.goals[0]}".` : null,
+      `${params.projectName} is ${params.currentStatus}.`,
+      `Recommended action: ${params.recommendedNextStep}.`,
+      primaryBlocker ? `Blocker: ${primaryBlocker}.` : null,
       evidenceSentence,
     ]
       .filter(Boolean)
       .join(" ");
   }
 
+  if (params.assistanceMode === "teach") {
+    if (params.mode === "next_step") {
+      return [
+        `${params.projectName} is currently ${params.currentStatus}, so the next step should reduce uncertainty without widening scope.`,
+        `The recommended step is ${params.recommendedNextStep}.`,
+        primaryBlocker
+          ? `That choice is shaped by the blocker "${primaryBlocker}", which means the project benefits more from tightening evaluation than from adding new complexity.`
+          : `There is no dominant blocker stored right now, so the recommendation follows the existing action memory directly.`,
+        primaryGoal ? `This matters because the project goal is "${primaryGoal}".` : null,
+        evidenceSentence,
+      ]
+        .filter(Boolean)
+        .join(" ");
+    }
+
+    if (params.mode === "why_next_step") {
+      return [
+        `This recommendation follows from how Research Brain weighs action memory, episodic memory, and matched artifact evidence together.`,
+        primaryBlocker ? `Action memory says the blocker is "${primaryBlocker}".` : null,
+        params.latestAttempt ? `Episodic memory shows the last attempt was "${params.latestAttempt}".` : null,
+        params.recentLearnings[0] ? `Recent learning adds that "${params.recentLearnings[0]}".` : null,
+        primaryGoal ? `Canonical memory sets the target as "${primaryGoal}".` : null,
+        `The tradeoff is to choose a smaller evidence-backed step now rather than a broader but less grounded move.`,
+        evidenceSentence,
+      ]
+        .filter(Boolean)
+        .join(" ");
+    }
+
+    if (params.mode === "worker_handoff") {
+      return [
+        `This request is routed to ${params.workerType === "codex" ? "Codex" : "Chat"} because the system distinguishes between reasoning work and execution work.`,
+        params.workerReason,
+        params.workerType === "codex"
+          ? `Codex is a better fit when repository changes, debugging, or implementation are implied.`
+          : `Chat is a better fit when the task is mainly prioritization, explanation, or synthesis.`,
+        params.suggestedSkill ? `The suggested skill is ${params.suggestedSkill}, which matches that operating mode.` : null,
+        evidenceSentence,
+      ]
+        .filter(Boolean)
+        .join(" ");
+    }
+
+    return [
+      `${params.projectName} is currently ${params.currentStatus}.`,
+      `The recommended next step is ${params.recommendedNextStep}.`,
+      `This is a balanced answer that combines project memory, matched local evidence, and worker routing when relevant.`,
+      evidenceSentence,
+    ].join(" ");
+  }
+
+  if (params.mode === "next_step") {
+    return [
+      `Task brief for ${params.projectName}:`,
+      `Objective: ${params.recommendedNextStep}.`,
+      `Estimated time: ${params.estimatedMinutes} minutes.`,
+      params.prerequisites.length > 0 ? `Prerequisites: ${params.prerequisites.join("; ")}.` : `Prerequisites: none stored.`,
+      params.successCriteria.length > 0 ? `Success criteria: ${params.successCriteria.join("; ")}.` : `Success criteria: not yet defined.`,
+      primaryBlocker ? `Primary blocker to watch: ${primaryBlocker}.` : null,
+      evidenceSentence,
+    ]
+      .filter(Boolean)
+      .join(" ");
+  }
+
+  if (params.mode === "why_next_step") {
+    return [
+      `Rationale outline for why this is next:`,
+      primaryBlocker ? `1. Blocker pressure: ${primaryBlocker}.` : `1. No dominant blocker is stored, so action memory leads.`,
+      params.latestAttempt ? `2. Recent attempt: ${params.latestAttempt}.` : `2. No recent attempt is stored.`,
+      params.recentLearnings[0] ? `3. What was learned: ${params.recentLearnings[0]}.` : `3. Recent learning is sparse.`,
+      primaryGoal ? `4. Goal served: ${primaryGoal}.` : `4. Goal linkage is weak.`,
+      `5. Evidence: ${evidenceSentence}`,
+    ].join(" ");
+  }
+
   if (params.mode === "worker_handoff") {
     return [
-      `This request fits ${params.workerType === "codex" ? "Codex" : "Chat"} more than the other worker.`,
+      `Handoff brief:`,
+      `Recommended worker: ${params.workerType}.`,
+      `Reason: ${params.workerReason}.`,
+      params.suggestedSkill ? `Suggested skill: ${params.suggestedSkill}.` : `Suggested skill: none.`,
       params.workerType === "codex"
-        ? `It should go to Codex because ${params.workerReason.toLowerCase()}`
-        : `It should stay in Chat because ${params.workerReason.toLowerCase()}`,
-      params.suggestedSkill ? `The suggested skill is ${params.suggestedSkill}.` : "There is no specific skill suggestion for this request.",
-      params.workerType === "codex"
-        ? `The repository-facing step would be: ${params.recommendedNextStep}.`
-        : `The planning-facing step would be: ${params.recommendedNextStep}.`,
+        ? `Execution payload: turn the current need into a repo task centered on "${params.recommendedNextStep}".`
+        : `Reasoning payload: keep the work in chat and use project evidence to clarify the next decision.`,
       evidenceSentence,
     ].join(" ");
   }
 
   return [
-    `${params.projectName} is currently ${params.currentStatus}.`,
-    params.blockers.length > 0 ? `The main blocker is ${params.blockers[0]}.` : "There are no stored blockers right now.",
-    `The most concrete next step is: ${params.recommendedNextStep}.`,
-    params.latestAttempt ? `The latest stored session was attempting: ${params.latestAttempt}.` : null,
+    `Structured project brief for ${params.projectName}:`,
+    `Status: ${params.currentStatus}.`,
+    primaryBlocker ? `Blocker: ${primaryBlocker}.` : `Blocker: none stored.`,
+    `Recommended next step: ${params.recommendedNextStep}.`,
+    params.latestAttempt ? `Recent attempt: ${params.latestAttempt}.` : null,
     evidenceSentence,
-    params.workerType === "codex"
-      ? `This request is better handled by Codex because ${params.workerReason.toLowerCase()}`
-      : `This request should stay in chat because ${params.workerReason.toLowerCase()}`,
+    `Worker guidance: ${params.workerType} because ${params.workerReason.toLowerCase()}`,
   ]
     .filter(Boolean)
     .join(" ");
@@ -263,9 +357,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "message is required." }, { status: 400 });
   }
 
+  if (!body.assistance_mode) {
+    return NextResponse.json({ error: "assistance_mode is required." }, { status: 400 });
+  }
+
   const matchedSources = await searchProjectContext(project.id, body.message);
   const worker = decideWorker(body.message);
   const questionMode = classifyQuestionMode(body.message);
+  const assistanceMode = body.assistance_mode;
   const blockers = contextBundle.action.blockers;
   const recommendedNextStep = contextBundle.action.recommendedNextStep;
   const estimatedMinutes = contextBundle.action.estimatedMinutes;
@@ -287,8 +386,10 @@ export async function POST(request: Request) {
 
   const response: ChatResponse = {
     question_mode: questionMode,
+    assistance_mode: assistanceMode,
     answer: buildModeSpecificAnswer({
       mode: questionMode,
+      assistanceMode,
       projectName: project.name,
       currentStatus: contextBundle.action.currentStatus,
       blockers,

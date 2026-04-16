@@ -38,6 +38,7 @@ export interface ChatMessage {
 export interface ChatRequest {
   projectId: string;
   message: string;
+  assistance_mode: AssistanceMode;
   history?: ChatMessage[];
 }
 
@@ -46,6 +47,8 @@ export type ChatQuestionMode =
   | "why_next_step"
   | "worker_handoff"
   | "general_project_question";
+
+export type AssistanceMode = "help" | "teach" | "do";
 
 export interface MatchedContextSource {
   title: string;
@@ -62,6 +65,7 @@ export interface MatchedContextSource {
 
 export interface ChatResponse {
   question_mode: ChatQuestionMode;
+  assistance_mode: AssistanceMode;
   answer: string;
   current_status: string;
   blockers: string[];

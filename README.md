@@ -81,6 +81,22 @@ The chat route now classifies each question into a lightweight deterministic mod
 
 This keeps the quick actions grounded in the same project memory and local sources, while making their wording and emphasis materially different instead of collapsing into one summary paragraph.
 
+## Question Intent + Assistance Modes
+
+Research Brain now varies grounded responses along two axes:
+
+- question intent:
+  - `next_step`
+  - `why_next_step`
+  - `worker_handoff`
+  - `general_project_question`
+- assistance mode:
+  - `help` for concise, action-oriented guidance
+  - `teach` for explanation, reasoning, and tradeoffs
+  - `do` for a more complete artifact such as a task brief, rationale outline, or handoff payload
+
+The same project memory and local evidence are reused across modes, but the wording and structure now change meaningfully based on both the question and the selected level of assistance.
+
 ## Current Retrieval Strategy
 
 Research Brain uses a deterministic local-only ranker in `lib/retrieval/search.ts`. It does not use embeddings yet.

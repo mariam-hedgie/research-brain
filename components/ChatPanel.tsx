@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { ChatResponse, Project } from "@/lib/types";
+import type { AssistanceMode, ChatResponse, Project } from "@/lib/types";
 
 interface ChatPanelProps {
   project: Project;
@@ -33,6 +33,7 @@ const starterMessages: ChatTurn[] = [
 
 export function ChatPanel({ project }: ChatPanelProps) {
   const [draft, setDraft] = useState("");
+  const [assistanceMode, setAssistanceMode] = useState<AssistanceMode>("help");
   const [messages, setMessages] = useState<ChatTurn[]>(starterMessages);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -66,6 +67,7 @@ export function ChatPanel({ project }: ChatPanelProps) {
         body: JSON.stringify({
           projectId: project.id,
           message,
+          assistance_mode: assistanceMode,
           history: nextMessages,
         }),
       });
@@ -105,6 +107,8 @@ export function ChatPanel({ project }: ChatPanelProps) {
         <p style={{ margin: 0 }}>{response.answer}</p>
 
         <div className="pill-row">
+          <span className="pill">Mode: {response.assistance_mode}</span>
+          <span className="pill">Intent: {response.question_mode}</span>
           <span className={`pill ${response.worker_type === "codex" ? "" : "accent"}`}>Worker: {response.worker_type}</span>
           <span className="pill accent">Status: {response.current_status}</span>
           <span className="pill">{response.suggested_skill ?? "No suggested skill"}</span>
@@ -198,10 +202,15 @@ export function ChatPanel({ project }: ChatPanelProps) {
         display: "grid",
         gridTemplateRows: "auto minmax(0, 1fr) auto",
         minHeight: 720,
+        gap: 16,
       }}
     >
-      <h3>Research Chat .:</h3>
-      <p className="muted">Grounded in this project&apos;s memory, notes, papers, and code summaries.</p>
+      <div style={{ display: "grid", gap: 8 }}>
+        <h3 style={{ marginBottom: 0 }}>Research Chat .:</h3>
+        <p className="muted" style={{ margin: 0 }}>
+          Grounded in this project&apos;s memory, notes, papers, and code summaries.
+        </p>
+      </div>
       <div
         ref={threadRef}
         className="chat-thread"
@@ -209,7 +218,6 @@ export function ChatPanel({ project }: ChatPanelProps) {
           minHeight: 0,
           overflowY: "auto",
           paddingRight: 4,
-          marginTop: 16,
         }}
       >
         {messages.map((message, index) => (
@@ -233,16 +241,36 @@ export function ChatPanel({ project }: ChatPanelProps) {
         style={{
           position: "sticky",
           bottom: 0,
-          marginTop: 16,
           paddingTop: 14,
           borderTop: "1px solid var(--border)",
           background:
-            "linear-gradient(180deg, rgba(255, 252, 246, 0.72) 0%, rgba(255, 252, 246, 0.96) 18%, rgba(255, 252, 246, 0.98) 100%)",
+            "linear-gradient(180deg, rgba(10, 17, 28, 0.72) 0%, rgba(12, 20, 34, 0.96) 18%, rgba(12, 20, 34, 0.98) 100%)",
           backdropFilter: "blur(4px)",
           display: "grid",
           gap: 12,
         }}
       >
+        <div style={{ display: "grid", gap: 10 }}>
+          <strong>Assistance Mode</strong>
+          <div className="pill-row">
+            {([
+              { value: "help", label: "Help me" },
+              { value: "teach", label: "Teach me" },
+              { value: "do", label: "Do it for me" },
+            ] as const).map((option) => (
+              <button
+                className={`pill ${assistanceMode === option.value ? "accent" : ""}`}
+                disabled={isLoading}
+                key={option.value}
+                onClick={() => setAssistanceMode(option.value)}
+                style={{ cursor: isLoading ? "not-allowed" : "pointer", background: assistanceMode === option.value ? "var(--accent-soft)" : undefined }}
+                type="button"
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+        </div>
         <div style={{ display: "grid", gap: 10 }}>
           <strong>Quick Actions</strong>
           <div className="pill-row">
@@ -263,7 +291,7 @@ export function ChatPanel({ project }: ChatPanelProps) {
         <div className="chat-input-row" style={{ marginTop: 0 }}>
           <textarea
             aria-label="Ask about the project"
-            placeholder="Ask for a next action, a summary of current progress, or whether this should be handed to Codex."
+            placeholder="Ask for help, a deeper explanation, or a more complete do-it-for-me output."
             value={draft}
             onChange={(event) => setDraft(event.target.value)}
           />
