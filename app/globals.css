@@ -17,6 +17,9 @@
   --shadow: 0 18px 42px rgba(2, 7, 17, 0.46);
   --pixel-star: rgba(255, 255, 255, 0.12);
   --pixel-star-soft: rgba(126, 182, 217, 0.14);
+  --pixel-corner: rgba(126, 182, 217, 0.16);
+  --planet-blue: rgba(126, 182, 217, 0.12);
+  --planet-violet: rgba(143, 149, 216, 0.12);
 }
 
 * {
@@ -34,17 +37,38 @@ body {
   margin: 0;
   color: var(--text);
   background:
+    radial-gradient(circle at 12% 14%, transparent 0 18px, rgba(126, 182, 217, 0.08) 18px 20px, transparent 20px),
+    linear-gradient(90deg, rgba(126, 182, 217, 0.1) 0 2px, transparent 2px 4px, rgba(126, 182, 217, 0.1) 4px 6px, transparent 6px),
+    linear-gradient(rgba(126, 182, 217, 0.1) 0 2px, transparent 2px 4px, rgba(126, 182, 217, 0.1) 4px 6px, transparent 6px),
+    radial-gradient(circle at 86% 18%, transparent 0 26px, rgba(143, 149, 216, 0.08) 26px 28px, transparent 28px),
+    linear-gradient(90deg, rgba(143, 149, 216, 0.08) 0 2px, transparent 2px 4px, rgba(143, 149, 216, 0.08) 4px 6px, transparent 6px),
+    linear-gradient(rgba(143, 149, 216, 0.08) 0 2px, transparent 2px 4px, rgba(143, 149, 216, 0.08) 4px 6px, transparent 6px),
     linear-gradient(rgba(126, 182, 217, 0.035) 1px, transparent 1px),
     linear-gradient(90deg, rgba(126, 182, 217, 0.035) 1px, transparent 1px),
     radial-gradient(circle at 14% 18%, var(--pixel-star) 0 1px, transparent 1.5px),
+    radial-gradient(circle at 14.6% 18%, var(--pixel-star) 0 1px, transparent 1.5px),
     radial-gradient(circle at 72% 11%, var(--pixel-star-soft) 0 1px, transparent 1.5px),
+    radial-gradient(circle at 72.5% 11.4%, var(--pixel-star-soft) 0 1px, transparent 1.5px),
     radial-gradient(circle at 84% 32%, rgba(255, 255, 255, 0.1) 0 1px, transparent 1.5px),
+    radial-gradient(circle at 84.4% 32.4%, rgba(255, 255, 255, 0.08) 0 1px, transparent 1.5px),
     radial-gradient(circle at 35% 67%, rgba(126, 182, 217, 0.08) 0 1px, transparent 1.5px),
+    radial-gradient(circle at 35.4% 67.4%, rgba(126, 182, 217, 0.06) 0 1px, transparent 1.5px),
     radial-gradient(circle at 88% 82%, rgba(143, 149, 216, 0.08) 0 1px, transparent 1.5px),
+    radial-gradient(circle at 88.4% 82.4%, rgba(143, 149, 216, 0.06) 0 1px, transparent 1.5px),
+    radial-gradient(circle at 48% 22%, rgba(255, 255, 255, 0.08) 0 1px, transparent 1.5px),
+    radial-gradient(circle at 48.4% 22.3%, rgba(255, 255, 255, 0.06) 0 1px, transparent 1.5px),
+    radial-gradient(circle at 22% 78%, rgba(126, 182, 217, 0.07) 0 1px, transparent 1.5px),
+    radial-gradient(circle at 22.4% 78.3%, rgba(126, 182, 217, 0.05) 0 1px, transparent 1.5px),
     radial-gradient(circle at top left, rgba(126, 182, 217, 0.08), transparent 30%),
     radial-gradient(circle at bottom right, rgba(143, 149, 216, 0.09), transparent 26%),
     linear-gradient(180deg, #0b1424 0%, #060b15 100%);
   background-size:
+    auto,
+    6px 6px,
+    6px 6px,
+    auto,
+    6px 6px,
+    6px 6px,
     24px 24px,
     24px 24px,
     auto,
@@ -59,6 +83,55 @@ body {
     "IBM Plex Sans",
     "Segoe UI",
     sans-serif;
+  position: relative;
+}
+
+body::before,
+body::after {
+  content: "";
+  position: fixed;
+  pointer-events: none;
+  z-index: 0;
+  image-rendering: pixelated;
+}
+
+body::before {
+  top: 10vh;
+  right: 6vw;
+  width: 56px;
+  height: 56px;
+  opacity: 0.34;
+  background:
+    linear-gradient(var(--planet-blue) 0 0) 18px 0/20px 4px no-repeat,
+    linear-gradient(var(--planet-blue) 0 0) 10px 4px/36px 4px no-repeat,
+    linear-gradient(var(--planet-blue) 0 0) 6px 8px/44px 4px no-repeat,
+    linear-gradient(var(--planet-blue) 0 0) 4px 12px/48px 4px no-repeat,
+    linear-gradient(var(--planet-blue) 0 0) 2px 16px/52px 4px no-repeat,
+    linear-gradient(var(--planet-blue) 0 0) 0 20px/56px 4px no-repeat,
+    linear-gradient(var(--planet-blue) 0 0) 2px 24px/52px 4px no-repeat,
+    linear-gradient(var(--planet-blue) 0 0) 4px 28px/48px 4px no-repeat,
+    linear-gradient(var(--planet-blue) 0 0) 8px 32px/40px 4px no-repeat,
+    linear-gradient(var(--planet-blue) 0 0) 12px 36px/32px 4px no-repeat,
+    linear-gradient(var(--planet-blue) 0 0) 18px 40px/20px 4px no-repeat,
+    linear-gradient(rgba(255, 255, 255, 0.18) 0 0) 38px 12px/4px 4px no-repeat;
+}
+
+body::after {
+  bottom: 12vh;
+  left: 5vw;
+  width: 40px;
+  height: 40px;
+  opacity: 0.28;
+  background:
+    linear-gradient(var(--planet-violet) 0 0) 12px 0/12px 4px no-repeat,
+    linear-gradient(var(--planet-violet) 0 0) 8px 4px/20px 4px no-repeat,
+    linear-gradient(var(--planet-violet) 0 0) 4px 8px/28px 4px no-repeat,
+    linear-gradient(var(--planet-violet) 0 0) 0 12px/36px 4px no-repeat,
+    linear-gradient(var(--planet-violet) 0 0) 0 16px/36px 4px no-repeat,
+    linear-gradient(var(--planet-violet) 0 0) 4px 20px/28px 4px no-repeat,
+    linear-gradient(var(--planet-violet) 0 0) 8px 24px/20px 4px no-repeat,
+    linear-gradient(var(--planet-violet) 0 0) 12px 28px/12px 4px no-repeat,
+    linear-gradient(rgba(255, 255, 255, 0.14) 0 0) 26px 8px/4px 4px no-repeat;
 }
 
 a {
@@ -124,6 +197,28 @@ textarea {
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent 28%),
     linear-gradient(90deg, rgba(126, 182, 217, 0.05), transparent 36%);
+}
+
+.hero-card::after,
+.panel::after,
+.sidebar-card::after,
+.source-card::after,
+.next-step-card::after,
+.project-header::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(var(--pixel-corner) 0 0) 0 0/10px 2px no-repeat,
+    linear-gradient(var(--pixel-corner) 0 0) 0 0/2px 10px no-repeat,
+    linear-gradient(var(--pixel-corner) 0 0) 100% 0/10px 2px no-repeat,
+    linear-gradient(var(--pixel-corner) 0 0) 100% 0/2px 10px no-repeat,
+    linear-gradient(var(--pixel-corner) 0 0) 0 100%/10px 2px no-repeat,
+    linear-gradient(var(--pixel-corner) 0 0) 0 100%/2px 10px no-repeat,
+    linear-gradient(var(--pixel-corner) 0 0) 100% 100%/10px 2px no-repeat,
+    linear-gradient(var(--pixel-corner) 0 0) 100% 100%/2px 10px no-repeat;
+  opacity: 0.7;
 }
 
 .hero-card {
@@ -206,6 +301,7 @@ textarea {
     transform 180ms ease,
     border-color 180ms ease,
     box-shadow 180ms ease;
+  position: relative;
 }
 
 .project-card:hover,
@@ -235,6 +331,24 @@ textarea {
     "SFMono-Regular",
     monospace;
   letter-spacing: -0.02em;
+}
+
+.project-card h3::before,
+.sidebar-card h3::before,
+.next-step-card h3::before,
+.source-card h3::before,
+.panel h3::before {
+  content: "";
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 10px;
+  vertical-align: middle;
+  background:
+    linear-gradient(var(--accent) 0 0) 0 0/4px 4px no-repeat,
+    linear-gradient(var(--accent) 0 0) 4px 0/4px 4px no-repeat,
+    linear-gradient(var(--accent) 0 0) 0 4px/4px 4px no-repeat;
+  opacity: 0.8;
 }
 
 .project-card p {
