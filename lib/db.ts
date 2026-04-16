@@ -1,12 +1,19 @@
-import projects from "@/data/projects.json";
 import type { Project } from "@/lib/types";
+import { readFile } from "node:fs/promises";
+import path from "node:path";
 
-const projectRecords = projects as Project[];
+const PROJECTS_PATH = path.join(process.cwd(), "data", "projects.json");
+
+async function readProjectsFile(): Promise<Project[]> {
+  const contents = await readFile(PROJECTS_PATH, "utf8");
+  return JSON.parse(contents) as Project[];
+}
 
 export async function getProjects(): Promise<Project[]> {
-  return projectRecords;
+  return readProjectsFile();
 }
 
 export async function getProjectById(id: string): Promise<Project | null> {
-  return projectRecords.find((project) => project.id === id) ?? null;
+  const projects = await readProjectsFile();
+  return projects.find((project) => project.id === id) ?? null;
 }

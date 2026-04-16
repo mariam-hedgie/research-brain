@@ -13,17 +13,70 @@
     "codeSummaryCount": 2,
     "tags": ["retrieval", "notes", "evaluation"],
     "memory": {
-      "canonical": [
-        "The project compares retrieval quality across notes, papers, and code summaries.",
-        "The current focus is improving grounded project planning."
-      ],
+      "canonical": {
+        "name": "Graph Retrieval Study",
+        "description": "Compare how notes, papers, and code summaries should be retrieved so Research Brain can reason from real project state.",
+        "goals": [
+          "Measure planning quality across different retrieval mixes",
+          "Prefer grounded next-step recommendations over generic responses"
+        ],
+        "deadlines": [
+          {
+            "label": "Showcase script locked",
+            "dueDate": "2026-04-22"
+          }
+        ],
+        "repoPaths": ["app/", "lib/retrieval/", "data/projects.json"],
+        "linkedPapers": [
+          {
+            "title": "Grounded Planning for Research Agents",
+            "citation": "Workshop paper, 2025",
+            "relevance": "Supports separating durable project memory from short-horizon planning context."
+          }
+        ],
+        "evaluationCriteria": [
+          "Suggested next steps must reference project-specific evidence",
+          "Planning responses should identify the right source mix"
+        ]
+      },
       "episodic": [
-        "Added local project examples for retrieval ranking discussion.",
-        "Narrowed the demo to one active project and one clear next step."
+        {
+          "date": "2026-04-15",
+          "attempted": [
+            "Reviewed whether mixed-source retrieval improves planning prompts"
+          ],
+          "changed": [
+            "Added examples showing where note-only retrieval missed implementation context"
+          ],
+          "failed": [
+            "Simple lexical matching did not rank code summaries strongly enough"
+          ],
+          "learned": [
+            "Planning prompts need both notes and code summaries when project details are sparse"
+          ],
+          "filesTouched": ["data/projects.json", "lib/retrieval/search.ts"],
+          "references": [
+            {
+              "kind": "note",
+              "title": "Weekly retrieval log"
+            },
+            {
+              "kind": "paper",
+              "title": "Grounded Planning for Research Agents"
+            }
+          ]
+        }
       ],
       "action": {
-        "nextStep": "Run a small evaluation comparing note-only retrieval against mixed-source retrieval on five planning prompts.",
-        "prerequisites": ["Finalize the planning prompt set", "Confirm scoring rubric"]
+        "currentStatus": "active",
+        "blockers": ["Planning rubric is still informal"],
+        "recommendedNextStep": "Run a five-prompt evaluation comparing note-only retrieval against mixed-source retrieval for planning questions.",
+        "estimatedMinutes": 45,
+        "prerequisites": ["Finalize the planning prompt set", "Confirm scoring rubric"],
+        "successCriteria": [
+          "Each prompt has outputs from both retrieval settings",
+          "A clear winner is identified for grounded planning quality"
+        ]
       }
     },
     "contextSources": [
@@ -64,17 +117,70 @@
     "codeSummaryCount": 1,
     "tags": ["papers", "workflow", "memory"],
     "memory": {
-      "canonical": [
-        "Paper summaries are not sufficient unless they change the active project plan.",
-        "The workflow should point to a code or experiment consequence."
-      ],
+      "canonical": {
+        "name": "Literature Synthesis Workflow",
+        "description": "Turn paper reading into project consequences such as experiments, metrics, and implementation changes.",
+        "goals": [
+          "Create a paper review template that names project impact",
+          "Link literature insights to code and experiment decisions"
+        ],
+        "deadlines": [
+          {
+            "label": "Paper-linking demo flow drafted",
+            "dueDate": "2026-04-24"
+          }
+        ],
+        "repoPaths": ["skills/paper-to-project-linker/", "data/papers/", "data/notes/"],
+        "linkedPapers": [
+          {
+            "title": "Scientific Workflow Memory Systems",
+            "citation": "Preprint, 2025",
+            "relevance": "Shows why durable project memory matters across research sessions."
+          }
+        ],
+        "evaluationCriteria": [
+          "Each paper review names a concrete downstream action",
+          "Reviews should surface mismatches with the active project setup"
+        ]
+      },
       "episodic": [
-        "Collected examples where paper notes never changed the actual roadmap.",
-        "Defined the need for a project-aware paper linking layer."
+        {
+          "date": "2026-04-12",
+          "attempted": [
+            "Reviewed why prior paper notes did not alter roadmap decisions"
+          ],
+          "changed": [
+            "Defined a need for paper summaries to point to experiments or code changes"
+          ],
+          "failed": [
+            "A summary-only format did not create actionable project updates"
+          ],
+          "learned": [
+            "Paper notes are only useful when attached to a current project decision"
+          ],
+          "filesTouched": ["skills/paper-to-project-linker/SKILL.md", "data/projects.json"],
+          "references": [
+            {
+              "kind": "note",
+              "title": "Paper linking notes"
+            },
+            {
+              "kind": "paper",
+              "title": "Scientific Workflow Memory Systems"
+            }
+          ]
+        }
       ],
       "action": {
-        "nextStep": "Draft one project-aware paper review template and test it on two recent papers.",
-        "prerequisites": ["Choose target project", "Select two representative papers"]
+        "currentStatus": "ready",
+        "blockers": [],
+        "recommendedNextStep": "Draft one project-aware paper review template and test it on two recent papers.",
+        "estimatedMinutes": 35,
+        "prerequisites": ["Choose target project", "Select two representative papers"],
+        "successCriteria": [
+          "The template captures method, assumptions, and project consequences",
+          "Two papers can be processed without adding extra fields"
+        ]
       }
     },
     "contextSources": [
@@ -91,6 +197,99 @@
         "title": "Scientific Workflow Memory Systems",
         "summary": "Shows that stable project memory improves continuity across research sessions.",
         "updatedAt": "2026-04-08"
+      }
+    ]
+  },
+  {
+    "id": "repo-handoff",
+    "name": "Repo Handoff Operator",
+    "slug": "repo-handoff-operator",
+    "tagline": "Decide when a research question should become a Codex execution task.",
+    "status": "blocked",
+    "objective": "Make Research Brain route implementation-shaped requests into concrete Codex handoffs without over-escalating.",
+    "summary": "This project defines the boundary between chat reasoning and execution so the system can stay grounded in current repository state and only hand off work that actually needs code changes.",
+    "updatedAt": "2026-04-14",
+    "notesCount": 3,
+    "papersCount": 1,
+    "codeSummaryCount": 2,
+    "tags": ["routing", "codex", "repo-state"],
+    "memory": {
+      "canonical": {
+        "name": "Repo Handoff Operator",
+        "description": "Route user requests between planning/explanation and repository execution using current project state.",
+        "goals": [
+          "Avoid sending vague questions to Codex",
+          "Escalate code-changing requests when repository action is clearly required"
+        ],
+        "deadlines": [
+          {
+            "label": "Router demo stable for showcase",
+            "dueDate": "2026-04-23"
+          }
+        ],
+        "repoPaths": ["app/api/router/route.ts", "lib/routing/decideWorker.ts", "components/ChatPanel.tsx"],
+        "linkedPapers": [
+          {
+            "title": "Execution-Aware Agent Routing",
+            "citation": "ArXiv, 2025",
+            "relevance": "Supports separating reasoning tasks from tool-execution tasks."
+          }
+        ],
+        "evaluationCriteria": [
+          "Router should classify planning vs implementation requests correctly",
+          "Handoffs should include a clear reason grounded in project state"
+        ]
+      },
+      "episodic": [
+        {
+          "date": "2026-04-14",
+          "attempted": [
+            "Tested simple keyword routing for implementation-shaped prompts"
+          ],
+          "changed": [
+            "Added an initial chat-versus-Codex heuristic"
+          ],
+          "failed": [
+            "The router could not explain ambiguity when prompts mixed planning and code work"
+          ],
+          "learned": [
+            "Routing needs a reason field so the user can understand why Codex is or is not selected"
+          ],
+          "filesTouched": ["lib/routing/decideWorker.ts", "app/api/router/route.ts"],
+          "references": [
+            {
+              "kind": "note",
+              "title": "Router design notes"
+            }
+          ]
+        }
+      ],
+      "action": {
+        "currentStatus": "blocked",
+        "blockers": ["No ambiguity handling for mixed planning and implementation prompts"],
+        "recommendedNextStep": "Add a small set of routing examples that cover explanation-only, planning, and code-execution requests.",
+        "estimatedMinutes": 30,
+        "prerequisites": ["List representative prompt categories"],
+        "successCriteria": [
+          "Each routing example has an expected worker and explanation",
+          "At least one mixed-intent prompt is handled explicitly"
+        ]
+      }
+    },
+    "contextSources": [
+      {
+        "id": "note-3",
+        "kind": "note",
+        "title": "Router design notes",
+        "summary": "Routing should stay conservative and only hand off to Codex when code changes or execution are clearly needed.",
+        "updatedAt": "2026-04-14"
+      },
+      {
+        "id": "code-2",
+        "kind": "code_summary",
+        "title": "Router heuristic summary",
+        "summary": "The current router uses keyword matching and does not yet consider blockers or project state.",
+        "updatedAt": "2026-04-14"
       }
     ]
   }

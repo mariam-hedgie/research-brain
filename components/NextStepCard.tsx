@@ -25,6 +25,11 @@ export function NextStepCard({ nextStep }: NextStepCardProps) {
               </span>
             ))}
           </div>
+          <ul className="meta-list">
+            {nextStep.successCriteria.map((criterion) => (
+              <li key={criterion}>Success: {criterion}</li>
+            ))}
+          </ul>
         </div>
       )}
     </section>

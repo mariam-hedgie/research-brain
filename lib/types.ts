@@ -1,3 +1,5 @@
+import type { ProjectMemoryRecord } from "@/lib/memory/schema";
+
 export type SourceKind = "note" | "paper" | "code_summary";
 
 export type ProjectStatus = "active" | "planning" | "blocked";
@@ -8,15 +10,6 @@ export interface ContextSource {
   title: string;
   summary: string;
   updatedAt: string;
-}
-
-export interface ProjectMemory {
-  canonical: string[];
-  episodic: string[];
-  action: {
-    nextStep: string;
-    prerequisites: string[];
-  };
 }
 
 export interface Project {
@@ -32,7 +25,7 @@ export interface Project {
   papersCount: number;
   codeSummaryCount: number;
   tags: string[];
-  memory: ProjectMemory;
+  memory: ProjectMemoryRecord;
   contextSources: ContextSource[];
 }
 
@@ -63,6 +56,7 @@ export interface NextStepResponse {
   rationale: string;
   prerequisites: string[];
   estimatedMinutes: number;
+  successCriteria: string[];
 }
 
 export interface RouterRequest {

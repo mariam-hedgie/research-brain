@@ -10,9 +10,10 @@ export async function getNextStep(projectId: string): Promise<NextStepResponse |
 
   return {
     projectId: project.id,
-    nextStep: project.memory.action.nextStep,
+    nextStep: project.memory.action.recommendedNextStep,
     rationale: `This step is based on the project's current memory and most recent context sources for ${project.name}.`,
     prerequisites: project.memory.action.prerequisites,
-    estimatedMinutes: 45,
+    estimatedMinutes: project.memory.action.estimatedMinutes,
+    successCriteria: project.memory.action.successCriteria,
   };
 }

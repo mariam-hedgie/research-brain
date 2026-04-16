@@ -16,11 +16,13 @@ export async function POST(request: Request) {
   const worker = decideWorker(body.message);
 
   const response: ChatResponse = {
-    reply: `Research Brain sees ${project.name} as ${project.status}. The current objective is "${project.objective}". ${
+    reply: `Research Brain sees ${project.name} as ${project.memory.action.currentStatus}. The current objective is "${project.objective}". ${
       usedSources[0]
         ? `Relevant context includes "${usedSources[0].title}".`
         : "No highly relevant sources were matched from local context yet."
-    } ${worker.target === "codex" ? "This looks like a Codex handoff candidate." : "This fits a planning/explanation response."}`,
+    } The next recommended step is "${project.memory.action.recommendedNextStep}". ${
+      worker.target === "codex" ? "This looks like a Codex handoff candidate." : "This fits a planning/explanation response."
+    }`,
     usedSources,
     worker,
   };
