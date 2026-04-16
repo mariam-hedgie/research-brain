@@ -7,11 +7,15 @@
     "status": "active",
     "objective": "Find which retrieval setup gives the best planning and explanation quality for weekly research work.",
     "summary": "This project tests how note chunks, paper highlights, and code summaries should be combined so Research Brain can answer from real project state instead of generic chatbot priors.",
-    "updatedAt": "2026-04-15",
+    "updatedAt": "2026-04-16T22:20:34.067Z",
     "notesCount": 4,
     "papersCount": 3,
     "codeSummaryCount": 2,
-    "tags": ["retrieval", "notes", "evaluation"],
+    "tags": [
+      "retrieval",
+      "notes",
+      "evaluation"
+    ],
     "memory": {
       "canonical": {
         "name": "Graph Retrieval Study",
@@ -26,7 +30,11 @@
             "dueDate": "2026-04-22"
           }
         ],
-        "repoPaths": ["app/", "lib/retrieval/", "data/projects.json"],
+        "repoPaths": [
+          "app/",
+          "lib/retrieval/",
+          "data/projects.json"
+        ],
         "linkedPapers": [
           {
             "title": "Grounded Planning for Research Agents",
@@ -54,7 +62,10 @@
           "learned": [
             "Planning prompts need both notes and code summaries when project details are sparse"
           ],
-          "filesTouched": ["data/projects.json", "lib/retrieval/search.ts"],
+          "filesTouched": [
+            "data/projects.json",
+            "lib/retrieval/search.ts"
+          ],
           "references": [
             {
               "kind": "note",
@@ -65,14 +76,59 @@
               "title": "Grounded Planning for Research Agents"
             }
           ]
+        },
+        {
+          "date": "2026-04-16T22:20:12.372Z",
+          "attempted": [
+            "Answered user question: What should I do next?"
+          ],
+          "changed": [
+            "Question mode: next_step",
+            "Assistance mode: help",
+            "Recommended: Run a five-prompt evaluation comparing note-only retrieval against mixed-source retrieval for planning questions.",
+            "Proposed next step: Run a five-prompt evaluation comparing note-only retrieval against mixed-source retrieval for planning questions."
+          ],
+          "failed": [
+            "Referenced blocker: Planning rubric is still informal"
+          ],
+          "learned": [
+            "Grounded response used sources: Planning prompt review, Retriever prototype summary, Grounded Planning for Research Agents"
+          ],
+          "filesTouched": [],
+          "references": []
+        },
+        {
+          "date": "2026-04-16T22:20:34.067Z",
+          "attempted": [
+            "Answered user question: Why is that the next step?"
+          ],
+          "changed": [
+            "Question mode: why_next_step",
+            "Assistance mode: teach",
+            "Recommended: Run a five-prompt evaluation comparing note-only retrieval against mixed-source retrieval for planning questions.",
+            "Proposed next step: Run a five-prompt evaluation comparing note-only retrieval against mixed-source retrieval for planning questions."
+          ],
+          "failed": [
+            "Referenced blocker: Planning rubric is still informal"
+          ],
+          "learned": [
+            "Grounded response used sources: Grounded Planning for Research Agents, Grounded Planning for Research Agents, Planning prompt review"
+          ],
+          "filesTouched": [],
+          "references": []
         }
       ],
       "action": {
         "currentStatus": "active",
-        "blockers": ["Planning rubric is still informal"],
+        "blockers": [
+          "Planning rubric is still informal"
+        ],
         "recommendedNextStep": "Run a five-prompt evaluation comparing note-only retrieval against mixed-source retrieval for planning questions.",
         "estimatedMinutes": 45,
-        "prerequisites": ["Finalize the planning prompt set", "Confirm scoring rubric"],
+        "prerequisites": [
+          "Finalize the planning prompt set",
+          "Confirm scoring rubric"
+        ],
         "successCriteria": [
           "Each prompt has outputs from both retrieval settings",
           "A clear winner is identified for grounded planning quality"
@@ -115,7 +171,11 @@
     "notesCount": 2,
     "papersCount": 5,
     "codeSummaryCount": 1,
-    "tags": ["papers", "workflow", "memory"],
+    "tags": [
+      "papers",
+      "workflow",
+      "memory"
+    ],
     "memory": {
       "canonical": {
         "name": "Literature Synthesis Workflow",
@@ -130,7 +190,11 @@
             "dueDate": "2026-04-24"
           }
         ],
-        "repoPaths": ["skills/paper-to-project-linker/", "data/papers/", "data/notes/"],
+        "repoPaths": [
+          "skills/paper-to-project-linker/",
+          "data/papers/",
+          "data/notes/"
+        ],
         "linkedPapers": [
           {
             "title": "Scientific Workflow Memory Systems",
@@ -158,7 +222,10 @@
           "learned": [
             "Paper notes are only useful when attached to a current project decision"
           ],
-          "filesTouched": ["skills/paper-to-project-linker/SKILL.md", "data/projects.json"],
+          "filesTouched": [
+            "skills/paper-to-project-linker/SKILL.md",
+            "data/projects.json"
+          ],
           "references": [
             {
               "kind": "note",
@@ -176,7 +243,10 @@
         "blockers": [],
         "recommendedNextStep": "Draft one project-aware paper review template and test it on two recent papers.",
         "estimatedMinutes": 35,
-        "prerequisites": ["Choose target project", "Select two representative papers"],
+        "prerequisites": [
+          "Choose target project",
+          "Select two representative papers"
+        ],
         "successCriteria": [
           "The template captures method, assumptions, and project consequences",
           "Two papers can be processed without adding extra fields"
@@ -212,7 +282,11 @@
     "notesCount": 3,
     "papersCount": 1,
     "codeSummaryCount": 2,
-    "tags": ["routing", "codex", "repo-state"],
+    "tags": [
+      "routing",
+      "codex",
+      "repo-state"
+    ],
     "memory": {
       "canonical": {
         "name": "Repo Handoff Operator",
@@ -227,7 +301,11 @@
             "dueDate": "2026-04-23"
           }
         ],
-        "repoPaths": ["app/api/router/route.ts", "lib/routing/decideWorker.ts", "components/ChatPanel.tsx"],
+        "repoPaths": [
+          "app/api/router/route.ts",
+          "lib/routing/decideWorker.ts",
+          "components/ChatPanel.tsx"
+        ],
         "linkedPapers": [
           {
             "title": "Execution-Aware Agent Routing",
@@ -255,7 +333,10 @@
           "learned": [
             "Routing needs a reason field so the user can understand why Codex is or is not selected"
           ],
-          "filesTouched": ["lib/routing/decideWorker.ts", "app/api/router/route.ts"],
+          "filesTouched": [
+            "lib/routing/decideWorker.ts",
+            "app/api/router/route.ts"
+          ],
           "references": [
             {
               "kind": "note",
@@ -266,10 +347,14 @@
       ],
       "action": {
         "currentStatus": "blocked",
-        "blockers": ["No ambiguity handling for mixed planning and implementation prompts"],
+        "blockers": [
+          "No ambiguity handling for mixed planning and implementation prompts"
+        ],
         "recommendedNextStep": "Add a small set of routing examples that cover explanation-only, planning, and code-execution requests.",
         "estimatedMinutes": 30,
-        "prerequisites": ["List representative prompt categories"],
+        "prerequisites": [
+          "List representative prompt categories"
+        ],
         "successCriteria": [
           "Each routing example has an expected worker and explanation",
           "At least one mixed-intent prompt is handled explicitly"
