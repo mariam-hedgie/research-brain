@@ -9,7 +9,7 @@ export function ProjectHeader({ project }: ProjectHeaderProps) {
     <section className="project-header">
       <div className="project-header-top">
         <div>
-          <div className="eyebrow">Research Brain Project</div>
+          <div className="eyebrow">Research Brain Project ::</div>
           <h1 className="section-title">{project.name}</h1>
           <p className="hero-copy">{project.summary}</p>
         </div>

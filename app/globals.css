@@ -1,14 +1,22 @@
 :root {
-  --bg: #f5f1e8;
-  --surface: rgba(255, 252, 246, 0.92);
-  --surface-strong: #fffdf8;
-  --border: #d8cfbf;
-  --text: #1f1c17;
-  --muted: #6c6254;
-  --accent: #1d5c4f;
-  --accent-soft: #dceee7;
-  --danger: #8a3b2f;
-  --shadow: 0 16px 40px rgba(44, 38, 29, 0.08);
+  color-scheme: dark;
+  --bg: #09111f;
+  --bg-deep: #050a14;
+  --surface: rgba(14, 23, 38, 0.88);
+  --surface-strong: rgba(18, 29, 46, 0.96);
+  --surface-soft: rgba(12, 20, 34, 0.78);
+  --border: rgba(122, 147, 189, 0.2);
+  --border-strong: rgba(140, 167, 212, 0.3);
+  --text: #edf3ff;
+  --muted: #9aa9c8;
+  --accent: #7eb6d9;
+  --accent-soft: rgba(126, 182, 217, 0.14);
+  --accent-strong: #8f95d8;
+  --danger: #ff9f97;
+  --glow: 0 0 0 1px rgba(126, 182, 217, 0.14), 0 18px 42px rgba(5, 10, 20, 0.42);
+  --shadow: 0 18px 42px rgba(2, 7, 17, 0.46);
+  --pixel-star: rgba(255, 255, 255, 0.12);
+  --pixel-star-soft: rgba(126, 182, 217, 0.14);
 }
 
 * {
@@ -16,16 +24,41 @@
 }
 
 html {
-  background: linear-gradient(180deg, #efe9dc 0%, #f9f6ef 100%);
+  background:
+    radial-gradient(circle at 18% 16%, rgba(126, 182, 217, 0.08), transparent 22%),
+    radial-gradient(circle at 78% 10%, rgba(143, 149, 216, 0.08), transparent 18%),
+    linear-gradient(180deg, #0b1424 0%, #060b15 100%);
 }
 
 body {
   margin: 0;
   color: var(--text);
   background:
-    radial-gradient(circle at top left, rgba(29, 92, 79, 0.08), transparent 32%),
-    linear-gradient(180deg, #efe9dc 0%, #f9f6ef 100%);
-  font-family: Georgia, "Times New Roman", serif;
+    linear-gradient(rgba(126, 182, 217, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(126, 182, 217, 0.035) 1px, transparent 1px),
+    radial-gradient(circle at 14% 18%, var(--pixel-star) 0 1px, transparent 1.5px),
+    radial-gradient(circle at 72% 11%, var(--pixel-star-soft) 0 1px, transparent 1.5px),
+    radial-gradient(circle at 84% 32%, rgba(255, 255, 255, 0.1) 0 1px, transparent 1.5px),
+    radial-gradient(circle at 35% 67%, rgba(126, 182, 217, 0.08) 0 1px, transparent 1.5px),
+    radial-gradient(circle at 88% 82%, rgba(143, 149, 216, 0.08) 0 1px, transparent 1.5px),
+    radial-gradient(circle at top left, rgba(126, 182, 217, 0.08), transparent 30%),
+    radial-gradient(circle at bottom right, rgba(143, 149, 216, 0.09), transparent 26%),
+    linear-gradient(180deg, #0b1424 0%, #060b15 100%);
+  background-size:
+    24px 24px,
+    24px 24px,
+    auto,
+    auto,
+    auto,
+    auto,
+    auto,
+    auto,
+    auto,
+    auto;
+  font-family:
+    "IBM Plex Sans",
+    "Segoe UI",
+    sans-serif;
 }
 
 a {
@@ -37,6 +70,21 @@ button,
 input,
 textarea {
   font: inherit;
+}
+
+button,
+a,
+textarea {
+  transition:
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    background-color 180ms ease,
+    transform 180ms ease;
+}
+
+:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 1px rgba(126, 182, 217, 0.85), 0 0 0 4px rgba(126, 182, 217, 0.12);
 }
 
 .app-shell {
@@ -55,10 +103,27 @@ textarea {
 .source-card,
 .next-step-card,
 .project-header {
-  background: var(--surface);
+  background: linear-gradient(180deg, rgba(18, 29, 46, 0.96) 0%, rgba(13, 22, 36, 0.94) 100%);
   border: 1px solid var(--border);
-  border-radius: 20px;
+  border-radius: 18px;
   box-shadow: var(--shadow);
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-card::before,
+.panel::before,
+.sidebar-card::before,
+.source-card::before,
+.next-step-card::before,
+.project-header::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent 28%),
+    linear-gradient(90deg, rgba(126, 182, 217, 0.05), transparent 36%);
 }
 
 .hero-card {
@@ -81,8 +146,8 @@ textarea {
 }
 
 .eyebrow {
-  font-size: 0.8rem;
-  letter-spacing: 0.12em;
+  font-size: 0.78rem;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--accent);
   margin-bottom: 12px;
@@ -96,7 +161,7 @@ textarea {
 
 .hero-title {
   font-size: clamp(2.3rem, 5vw, 4.8rem);
-  max-width: 10ch;
+  max-width: 11ch;
 }
 
 .hero-copy,
@@ -105,9 +170,9 @@ textarea {
 }
 
 .hero-copy {
-  max-width: 60ch;
-  font-size: 1.05rem;
-  line-height: 1.65;
+  max-width: 62ch;
+  font-size: 1.02rem;
+  line-height: 1.7;
 }
 
 .feature-list,
@@ -135,14 +200,19 @@ textarea {
   display: block;
   padding: 20px;
   border: 1px solid var(--border);
-  border-radius: 18px;
-  background: var(--surface-strong);
-  transition: transform 140ms ease, border-color 140ms ease;
+  border-radius: 16px;
+  background: linear-gradient(180deg, rgba(22, 34, 53, 0.9) 0%, rgba(15, 24, 39, 0.96) 100%);
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease,
+    box-shadow 180ms ease;
 }
 
-.project-card:hover {
-  transform: translateY(-2px);
-  border-color: var(--accent);
+.project-card:hover,
+.project-card:focus-visible {
+  transform: translateY(-1px);
+  border-color: var(--border-strong);
+  box-shadow: var(--glow);
 }
 
 .project-card h3,
@@ -152,6 +222,19 @@ textarea {
 .next-step-card h3 {
   margin-top: 0;
   margin-bottom: 10px;
+}
+
+.project-card h3,
+.sidebar-card h3,
+.next-step-card h3,
+.source-card h3,
+.panel h3,
+.project-header h1 {
+  font-family:
+    "IBM Plex Mono",
+    "SFMono-Regular",
+    monospace;
+  letter-spacing: -0.02em;
 }
 
 .project-card p {
@@ -169,18 +252,31 @@ textarea {
 .pill {
   display: inline-flex;
   align-items: center;
+  gap: 8px;
   border-radius: 999px;
   padding: 6px 12px;
   border: 1px solid var(--border);
-  background: #f7f2e8;
+  background: rgba(16, 26, 42, 0.92);
   color: var(--muted);
-  font-size: 0.9rem;
+  font-size: 0.86rem;
+}
+
+.pill::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  background: rgba(154, 169, 200, 0.75);
+  box-shadow: 8px 0 0 transparent;
 }
 
 .pill.accent {
-  color: var(--accent);
+  color: #dcecff;
   background: var(--accent-soft);
-  border-color: rgba(29, 92, 79, 0.2);
+  border-color: rgba(126, 182, 217, 0.24);
+}
+
+.pill.accent::before {
+  background: var(--accent);
 }
 
 .sidebar-card,
@@ -222,23 +318,35 @@ textarea {
   display: grid;
   gap: 14px;
   margin-top: 18px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(126, 182, 217, 0.32) transparent;
+}
+
+.chat-thread::-webkit-scrollbar {
+  width: 10px;
+}
+
+.chat-thread::-webkit-scrollbar-thumb {
+  background: rgba(126, 182, 217, 0.22);
+  border-radius: 999px;
 }
 
 .chat-bubble {
   padding: 14px 16px;
-  border-radius: 16px;
-  max-width: 85%;
-  line-height: 1.55;
+  border-radius: 14px;
+  max-width: 88%;
+  line-height: 1.6;
 }
 
 .chat-bubble.user {
   margin-left: auto;
-  background: #1f1c17;
-  color: #fffaf0;
+  background: linear-gradient(180deg, rgba(122, 149, 216, 0.22) 0%, rgba(75, 96, 158, 0.22) 100%);
+  border: 1px solid rgba(126, 182, 217, 0.22);
+  color: #edf3ff;
 }
 
 .chat-bubble.assistant {
-  background: #f7f2e8;
+  background: linear-gradient(180deg, rgba(17, 27, 42, 0.95) 0%, rgba(12, 21, 34, 0.94) 100%);
   border: 1px solid var(--border);
 }
 
@@ -247,6 +355,7 @@ textarea {
   grid-template-columns: 1fr auto;
   gap: 12px;
   margin-top: 18px;
+  align-items: end;
 }
 
 .chat-input-row textarea {
@@ -255,22 +364,35 @@ textarea {
   border-radius: 14px;
   border: 1px solid var(--border);
   padding: 14px;
-  background: #fffdf8;
+  background: rgba(9, 16, 27, 0.92);
+  color: var(--text);
+}
+
+.chat-input-row textarea::placeholder {
+  color: rgba(154, 169, 200, 0.72);
 }
 
 .button {
   height: fit-content;
-  border: 0;
+  border: 1px solid rgba(126, 182, 217, 0.22);
   border-radius: 999px;
   padding: 12px 18px;
   cursor: pointer;
-  background: var(--accent);
-  color: #f5f8f6;
+  background: linear-gradient(180deg, rgba(126, 182, 217, 0.22) 0%, rgba(102, 128, 200, 0.2) 100%);
+  color: var(--text);
+  box-shadow: 0 10px 22px rgba(5, 10, 20, 0.28);
+}
+
+.button:hover,
+.button:focus-visible {
+  box-shadow: var(--glow);
+  border-color: var(--border-strong);
 }
 
 .button[disabled] {
   opacity: 0.55;
   cursor: not-allowed;
+  box-shadow: none;
 }
 
 .source-list {
@@ -282,7 +404,7 @@ textarea {
   padding: 14px;
   border-radius: 14px;
   border: 1px solid var(--border);
-  background: #fffdf8;
+  background: linear-gradient(180deg, rgba(17, 27, 42, 0.95) 0%, rgba(11, 19, 31, 0.94) 100%);
 }
 
 .source-item p,
@@ -296,6 +418,7 @@ textarea {
 .source-item small,
 .meta-list li {
   color: var(--muted);
+  line-height: 1.55;
 }
 
 .next-step-body {
@@ -306,15 +429,16 @@ textarea {
 .state-box,
 .empty-state,
 .error-state {
-  border-radius: 16px;
+  border-radius: 14px;
   padding: 16px;
   border: 1px dashed var(--border);
-  background: rgba(255, 253, 248, 0.85);
+  background: rgba(10, 17, 28, 0.8);
 }
 
 .error-state {
-  border-color: rgba(138, 59, 47, 0.35);
+  border-color: rgba(255, 159, 151, 0.32);
   color: var(--danger);
+  background: rgba(42, 17, 22, 0.5);
 }
 
 @media (max-width: 980px) {

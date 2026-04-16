@@ -162,6 +162,18 @@ The project chat now behaves more like a working tool during longer demos:
 
 This keeps the workspace stable in a multi-message walkthrough while preserving the existing loading and error states.
 
+## UI Theme: Subtle Pixel Space + Dark Mode
+
+Research Brain now defaults to a dark mode theme with a calm pixel-space atmosphere.
+
+- deep blue-black backgrounds keep contrast high without using pure black
+- panels use soft borders, low-glow hover states, and slightly rounded corners
+- the background includes a faint pixel-star field and a subtle grid overlay with very low opacity
+- accents stay desaturated and quiet so the interface remains readable during research work
+- quick actions and the chat composer remain anchored at the bottom of the chat panel for clarity during longer sessions
+
+The goal of the theme is not decoration. It is to make the workspace feel focused, slightly distinctive, and demo-ready without distracting from project evidence and reasoning.
+
 ## Getting Started
 
 ```bash

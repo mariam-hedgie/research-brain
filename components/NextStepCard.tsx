@@ -7,7 +7,7 @@ interface NextStepCardProps {
 export function NextStepCard({ nextStep }: NextStepCardProps) {
   return (
     <section className="next-step-card">
-      <h3>Next Best Step</h3>
+      <h3>Next Best Step .:</h3>
       {!nextStep ? (
         <div className="empty-state">
           <p>No next step has been derived for this project yet.</p>

@@ -200,7 +200,7 @@ export function ChatPanel({ project }: ChatPanelProps) {
         minHeight: 720,
       }}
     >
-      <h3>Research Chat</h3>
+      <h3>Research Chat .:</h3>
       <p className="muted">Grounded in this project&apos;s memory, notes, papers, and code summaries.</p>
       <div
         ref={threadRef}
