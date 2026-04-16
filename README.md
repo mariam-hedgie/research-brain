@@ -58,6 +58,18 @@ The chat API in `app/api/chat/route.ts` does not call an LLM. Instead, it builds
 
 The response includes the current status, blockers, one recommended next step, why that recommendation follows from stored memory, the suggested worker type, the suggested skill, matched local sources, and follow-up questions. If source matching is weak, the response says so explicitly instead of pretending the evidence is stronger than it is.
 
+## Current Retrieval Strategy
+
+Research Brain uses a deterministic local-only ranker in `lib/retrieval/search.ts`. It does not use embeddings yet.
+
+- token overlap between the query and each source title/body drives the base score
+- the active project receives a small project-match boost
+- paper-, note-, and code-shaped questions get source-type relevance boosts
+- newer sources receive a modest recency bonus when `updatedAt` is available
+- blocker and next-step terms from project memory add extra weight when the query overlaps them
+
+Each ranked result returns `title`, `source_type`, `project`, `date`, `snippet`, and `score`. The goal is not perfect search; the goal is convincing project-aware retrieval for the MVP demo while keeping the ranking logic readable enough to swap later for embedding-based retrieval.
+
 ## Getting Started
 
 ```bash

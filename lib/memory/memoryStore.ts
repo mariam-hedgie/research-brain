@@ -138,3 +138,29 @@ export async function getLatestEpisodicMemory(projectId: string): Promise<Episod
 
   return bundle.recentEpisodes[bundle.recentEpisodes.length - 1] ?? null;
 }
+
+export interface ProjectRetrievalProfile {
+  projectId: string;
+  projectName: string;
+  blockers: string[];
+  nextStep: string;
+  goals: string[];
+  evaluationCriteria: string[];
+}
+
+export async function deriveProjectRetrievalProfile(projectId: string): Promise<ProjectRetrievalProfile | null> {
+  const bundle = await deriveProjectContextBundle(projectId);
+
+  if (!bundle) {
+    return null;
+  }
+
+  return {
+    projectId: bundle.projectId,
+    projectName: bundle.projectName,
+    blockers: bundle.action.blockers,
+    nextStep: bundle.action.recommendedNextStep,
+    goals: bundle.canonical.goals,
+    evaluationCriteria: bundle.canonical.evaluationCriteria,
+  };
+}

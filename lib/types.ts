@@ -40,8 +40,13 @@ export interface ChatRequest {
   history?: ChatMessage[];
 }
 
-export interface MatchedContextSource extends ContextSource {
-  match_score: number;
+export interface MatchedContextSource {
+  title: string;
+  source_type: SourceKind;
+  project: string;
+  date: string | null;
+  snippet: string;
+  score: number;
 }
 
 export interface ChatResponse {

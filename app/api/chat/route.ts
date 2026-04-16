@@ -10,7 +10,9 @@ function formatMatchedSources(matchedSources: ChatResponse["matched_sources"]): 
     return "Source evidence is weak: no local note, paper, or code summary matched this question strongly.";
   }
 
-  return `Matched local evidence: ${matchedSources.map((source) => `${source.title} (${source.kind})`).join(", ")}.`;
+  return `Matched local evidence: ${matchedSources
+    .map((source) => `${source.title} (${source.source_type}, score ${source.score})`)
+    .join(", ")}.`;
 }
 
 function buildWhyThisFollows(params: {
