@@ -58,6 +58,17 @@ The chat API in `app/api/chat/route.ts` does not call an LLM. Instead, it builds
 
 The response includes the current status, blockers, one recommended next step, why that recommendation follows from stored memory, the suggested worker type, the suggested skill, matched local sources, and follow-up questions. If source matching is weak, the response says so explicitly instead of pretending the evidence is stronger than it is.
 
+## Why quick actions now produce different answers
+
+The chat route now classifies each question into a lightweight deterministic mode before building the response:
+
+- `next_step` emphasizes the recommended next step, estimated time, prerequisites, and success criteria
+- `why_next_step` emphasizes blockers, recent episodic memory, matched source evidence, and project goals
+- `worker_handoff` emphasizes the worker type, routing reason, suggested skill, and why the task fits Chat or Codex
+- `general_project_question` keeps the balanced structured response
+
+This keeps the quick actions grounded in the same project memory and local sources, while making their wording and emphasis materially different instead of collapsing into one summary paragraph.
+
 ## Current Retrieval Strategy
 
 Research Brain uses a deterministic local-only ranker in `lib/retrieval/search.ts`. It does not use embeddings yet.

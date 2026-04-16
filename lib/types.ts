@@ -40,6 +40,12 @@ export interface ChatRequest {
   history?: ChatMessage[];
 }
 
+export type ChatQuestionMode =
+  | "next_step"
+  | "why_next_step"
+  | "worker_handoff"
+  | "general_project_question";
+
 export interface MatchedContextSource {
   title: string;
   source_type: SourceKind;
@@ -50,10 +56,14 @@ export interface MatchedContextSource {
 }
 
 export interface ChatResponse {
+  question_mode: ChatQuestionMode;
   answer: string;
   current_status: string;
   blockers: string[];
   recommended_next_step: string;
+  estimated_time: number;
+  prerequisites: string[];
+  success_criteria: string[];
   why_this_follows: string[];
   worker_type: WorkerDecision["worker_type"];
   worker_reason: string;
