@@ -53,9 +53,11 @@ export type AssistanceMode = "help" | "teach" | "do";
 export interface MatchedContextSource {
   title: string;
   source_type: RetrievalSourceType;
-  project: string;
+  projectId: string;
   date: string | null;
   filepath: string | null;
+  section: string | null;
+  page_number: number | null;
   location: string;
   line_start: number | null;
   line_end: number | null;

@@ -50,11 +50,18 @@ function formatMatchedSources(matchedSources: ChatResponse["matched_sources"]): 
 }
 
 function describeEvidenceLocation(source: ChatResponse["matched_sources"][number]): string {
+  const sectionPart = source.section ? `, section "${source.section}"` : "";
+  const pagePart = source.page_number ? `, page ${source.page_number}` : "";
+
   if (source.filepath && source.line_start && source.line_end) {
-    return `${source.filepath}:${source.line_start}-${source.line_end}`;
+    return `${source.filepath}:${source.line_start}-${source.line_end}${sectionPart}${pagePart}`;
   }
 
-  return source.location;
+  if (source.filepath) {
+    return `${source.filepath}${sectionPart}${pagePart}`;
+  }
+
+  return `${source.location}${sectionPart}${pagePart}`;
 }
 
 function findEvidenceByType(

@@ -11,6 +11,8 @@ export interface RetrievalChunk {
   sourceType: RetrievalSourceType;
   date: string | null;
   filepath: string | null;
+  section: string | null;
+  pageNumber: number | null;
   location: string;
   lineStart: number | null;
   lineEnd: number | null;
@@ -24,6 +26,7 @@ export interface ArtifactDocument {
   body: string;
   sourceType: ContextSource["kind"];
   date: string | null;
+  pageNumber: number | null;
   filepath: string;
 }
 
@@ -37,6 +40,8 @@ export function sourceToChunk(projectId: string, source: ContextSource): Retriev
     sourceType: source.kind,
     date: source.updatedAt ?? null,
     filepath: null,
+    section: null,
+    pageNumber: null,
     location: `context_source:${source.id}`,
     lineStart: null,
     lineEnd: null,
@@ -88,11 +93,12 @@ function parseArtifactFile(fileContents: string): {
 function splitIntoParagraphChunks(
   text: string,
   maxLength = 420,
-): Array<{ text: string; lineStart: number; lineEnd: number }> {
+): Array<{ text: string; lineStart: number; lineEnd: number; section: string | null }> {
   const lines = text.split(/\r?\n/);
-  const chunks: Array<{ text: string; lineStart: number; lineEnd: number }> = [];
+  const chunks: Array<{ text: string; lineStart: number; lineEnd: number; section: string | null }> = [];
   let paragraphLines: string[] = [];
   let paragraphStartLine = 1;
+  let currentSection: string | null = null;
 
   function flushParagraph(endLine: number) {
     const paragraph = paragraphLines.join(" ").trim();
@@ -107,6 +113,7 @@ function splitIntoParagraphChunks(
         text: paragraph,
         lineStart: paragraphStartLine,
         lineEnd: endLine,
+        section: currentSection,
       });
       paragraphLines = [];
       return;
@@ -126,6 +133,7 @@ function splitIntoParagraphChunks(
           text: current,
           lineStart: currentStart,
           lineEnd: endLine,
+          section: currentSection,
         });
         current = trimmed;
         currentStart = sentenceCursorLine;
@@ -139,6 +147,7 @@ function splitIntoParagraphChunks(
         text: current,
         lineStart: currentStart,
         lineEnd: endLine,
+        section: currentSection,
       });
     }
 
@@ -147,6 +156,14 @@ function splitIntoParagraphChunks(
 
   lines.forEach((line, index) => {
     const lineNumber = index + 1;
+    const headingMatch = line.match(/^#{1,6}\s+(.+)$/);
+
+    if (headingMatch) {
+      flushParagraph(lineNumber - 1);
+      currentSection = headingMatch[1].trim();
+      paragraphStartLine = lineNumber + 1;
+      return;
+    }
 
     if (line.trim().length === 0) {
       flushParagraph(lineNumber - 1);
@@ -166,7 +183,7 @@ function splitIntoParagraphChunks(
   return chunks.length > 0
     ? chunks
     : text.trim().length > 0
-      ? [{ text: text.trim().slice(0, maxLength), lineStart: 1, lineEnd: lines.length }]
+      ? [{ text: text.trim().slice(0, maxLength), lineStart: 1, lineEnd: lines.length, section: currentSection }]
       : [];
 }
 
@@ -193,6 +210,7 @@ export async function loadArtifactDocuments(): Promise<ArtifactDocument[]> {
             body: parsed.body,
             sourceType,
             date: parsed.metadata.date ?? null,
+            pageNumber: parsed.metadata.page ? Number(parsed.metadata.page) || null : null,
             filepath: path.relative(process.cwd(), filepath),
           } satisfies ArtifactDocument;
         }),
@@ -214,6 +232,8 @@ export function artifactToChunks(document: ArtifactDocument): RetrievalChunk[] {
     sourceType: document.sourceType,
     date: document.date,
     filepath: document.filepath,
+    section: paragraph.section,
+    pageNumber: document.pageNumber,
     location: `${document.filepath}:${paragraph.lineStart}-${paragraph.lineEnd}`,
     lineStart: paragraph.lineStart,
     lineEnd: paragraph.lineEnd,
@@ -238,6 +258,8 @@ export function memoryFieldToChunk(params: {
     sourceType: "memory",
     date: params.date ?? null,
     filepath: null,
+    section: null,
+    pageNumber: null,
     location: params.location ?? params.id,
     lineStart: null,
     lineEnd: null,

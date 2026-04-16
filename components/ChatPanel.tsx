@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { ContextSources } from "@/components/ContextSources";
 import type { AssistanceMode, ChatResponse, Project } from "@/lib/types";
 
 interface ChatPanelProps {
@@ -160,26 +161,11 @@ export function ChatPanel({ project }: ChatPanelProps) {
           </div>
 
           <div>
-            <strong>Matched Local Sources</strong>
-            {response.matched_sources.length === 0 ? (
-              <div className="empty-state" style={{ marginTop: 8 }}>
-                <p>No local sources matched this question strongly.</p>
-              </div>
-            ) : (
-              <ul className="source-list" style={{ marginTop: 8 }}>
-                {response.matched_sources.map((source) => (
-                  <li key={`${source.project}-${source.title}`} className="source-item">
-                    <div className="pill-row">
-                      <span className="pill accent">{source.source_type}</span>
-                      <span className="pill">Score {source.score}</span>
-                      <span className="pill">{source.date ?? "No date"}</span>
-                    </div>
-                    <h3>{source.title}</h3>
-                    <p>{source.snippet}</p>
-                  </li>
-                ))}
-              </ul>
-            )}
+            <ContextSources
+              title="Matched Local Sources"
+              description="These evidence cards show the specific local artifacts or memory locations that informed the response."
+              sources={response.matched_sources}
+            />
           </div>
 
           <div>

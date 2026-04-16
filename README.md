@@ -112,6 +112,22 @@ Research Brain uses a deterministic local-only ranker in `lib/retrieval/search.t
 
 Each ranked result returns `title`, `source_type`, `project`, `date`, `filepath`, `snippet`, and `score`. The goal is not perfect search; the goal is convincing project-aware retrieval for the MVP demo while keeping the ranking logic readable enough to swap later for embedding-based retrieval.
 
+## Evidence Links and Source Precision
+
+Matched evidence now carries more precise metadata so the UI can show where a recommendation came from instead of only naming a source title.
+
+- `title`
+- `source_type`
+- `projectId`
+- `filepath`
+- `section` when a markdown heading is available
+- `page_number` when a page is available
+- `line_start` and `line_end` when line ranges are available
+- `snippet`
+- `score`
+
+For local notes, papers, and code summaries, Research Brain now surfaces filepath and line-range evidence when it can. If a precise section, page, or line range is unavailable, the UI says so directly instead of fabricating location data.
+
 ## Local Artifact Format
 
 Research Brain expects text-based local artifacts in these folders:

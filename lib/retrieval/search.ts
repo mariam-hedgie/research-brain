@@ -246,9 +246,11 @@ function dedupeAndFormatResults(params: {
     results.push({
       title: chunk.title,
       source_type: chunk.sourceType,
-      project: params.projectName,
+      projectId: chunk.projectId,
       date: chunk.date,
       filepath: chunk.filepath,
+      section: chunk.section,
+      page_number: chunk.pageNumber,
       location: chunk.location,
       line_start: chunk.lineStart,
       line_end: chunk.lineEnd,
