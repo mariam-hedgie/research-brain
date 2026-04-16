@@ -108,6 +108,16 @@ For a 60-90 second walkthrough, open any project workspace and use the quick act
 
 This sequence shows the core Research Brain value quickly: grounded project state, visible evidence, and clear routing between reasoning and execution.
 
+## Chat UX improvements
+
+The project chat now behaves more like a working tool during longer demos:
+
+- the chat view auto-scrolls to the latest message when a user message is added, when loading begins, and when the assistant response arrives
+- quick actions stay attached to the bottom composer area so they remain easy to reach as the conversation grows
+- the input area stays visually anchored at the bottom of the panel instead of shifting upward as more messages appear
+
+This keeps the workspace stable in a multi-message walkthrough while preserving the existing loading and error states.
+
 ## Getting Started
 
 ```bash

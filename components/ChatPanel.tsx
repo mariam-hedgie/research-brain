@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ChatResponse, Project } from "@/lib/types";
 
 interface ChatPanelProps {
@@ -36,6 +36,15 @@ export function ChatPanel({ project }: ChatPanelProps) {
   const [messages, setMessages] = useState<ChatTurn[]>(starterMessages);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const threadRef = useRef<HTMLDivElement | null>(null);
+  const bottomAnchorRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    bottomAnchorRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "end",
+    });
+  }, [messages, isLoading]);
 
   async function submitMessage(rawMessage: string) {
     const message = rawMessage.trim();
@@ -183,27 +192,26 @@ export function ChatPanel({ project }: ChatPanelProps) {
   }
 
   return (
-    <section className="panel">
+    <section
+      className="panel"
+      style={{
+        display: "grid",
+        gridTemplateRows: "auto minmax(0, 1fr) auto",
+        minHeight: 720,
+      }}
+    >
       <h3>Research Chat</h3>
       <p className="muted">Grounded in this project&apos;s memory, notes, papers, and code summaries.</p>
-      <div style={{ marginTop: 16, display: "grid", gap: 10 }}>
-        <strong>Quick Actions</strong>
-        <div className="pill-row">
-          {quickActions.map((action) => (
-            <button
-              className="pill accent"
-              disabled={isLoading}
-              key={action}
-              onClick={() => void onQuickAction(action)}
-              style={{ cursor: isLoading ? "not-allowed" : "pointer", background: "var(--accent-soft)" }}
-              type="button"
-            >
-              {action}
-            </button>
-          ))}
-        </div>
-      </div>
-      <div className="chat-thread">
+      <div
+        ref={threadRef}
+        className="chat-thread"
+        style={{
+          minHeight: 0,
+          overflowY: "auto",
+          paddingRight: 4,
+          marginTop: 16,
+        }}
+      >
         {messages.map((message, index) => (
           <div key={`${message.role}-${index}`} className={`chat-bubble ${message.role}`}>
             {message.role === "assistant" && message.response ? renderAssistantResponse(message.response) : message.content}
@@ -219,17 +227,50 @@ export function ChatPanel({ project }: ChatPanelProps) {
             <p>{error}</p>
           </div>
         ) : null}
+        <div ref={bottomAnchorRef} />
       </div>
-      <div className="chat-input-row">
-        <textarea
-          aria-label="Ask about the project"
-          placeholder="Ask for a next action, a summary of current progress, or whether this should be handed to Codex."
-          value={draft}
-          onChange={(event) => setDraft(event.target.value)}
-        />
-        <button className="button" disabled={isLoading || !draft.trim()} onClick={onSubmit} type="button">
-          Send
-        </button>
+      <div
+        style={{
+          position: "sticky",
+          bottom: 0,
+          marginTop: 16,
+          paddingTop: 14,
+          borderTop: "1px solid var(--border)",
+          background:
+            "linear-gradient(180deg, rgba(255, 252, 246, 0.72) 0%, rgba(255, 252, 246, 0.96) 18%, rgba(255, 252, 246, 0.98) 100%)",
+          backdropFilter: "blur(4px)",
+          display: "grid",
+          gap: 12,
+        }}
+      >
+        <div style={{ display: "grid", gap: 10 }}>
+          <strong>Quick Actions</strong>
+          <div className="pill-row">
+            {quickActions.map((action) => (
+              <button
+                className="pill accent"
+                disabled={isLoading}
+                key={action}
+                onClick={() => void onQuickAction(action)}
+                style={{ cursor: isLoading ? "not-allowed" : "pointer", background: "var(--accent-soft)" }}
+                type="button"
+              >
+                {action}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="chat-input-row" style={{ marginTop: 0 }}>
+          <textarea
+            aria-label="Ask about the project"
+            placeholder="Ask for a next action, a summary of current progress, or whether this should be handed to Codex."
+            value={draft}
+            onChange={(event) => setDraft(event.target.value)}
+          />
+          <button className="button" disabled={isLoading || !draft.trim()} onClick={onSubmit} type="button">
+            Send
+          </button>
+        </div>
       </div>
     </section>
   );
