@@ -1,0 +1,97 @@
+[
+  {
+    "id": "graph-retrieval",
+    "name": "Graph Retrieval Study",
+    "slug": "graph-retrieval-study",
+    "tagline": "Compare retrieval strategies for research note grounding.",
+    "status": "active",
+    "objective": "Find which retrieval setup gives the best planning and explanation quality for weekly research work.",
+    "summary": "This project tests how note chunks, paper highlights, and code summaries should be combined so Research Brain can answer from real project state instead of generic chatbot priors.",
+    "updatedAt": "2026-04-15",
+    "notesCount": 4,
+    "papersCount": 3,
+    "codeSummaryCount": 2,
+    "tags": ["retrieval", "notes", "evaluation"],
+    "memory": {
+      "canonical": [
+        "The project compares retrieval quality across notes, papers, and code summaries.",
+        "The current focus is improving grounded project planning."
+      ],
+      "episodic": [
+        "Added local project examples for retrieval ranking discussion.",
+        "Narrowed the demo to one active project and one clear next step."
+      ],
+      "action": {
+        "nextStep": "Run a small evaluation comparing note-only retrieval against mixed-source retrieval on five planning prompts.",
+        "prerequisites": ["Finalize the planning prompt set", "Confirm scoring rubric"]
+      }
+    },
+    "contextSources": [
+      {
+        "id": "note-1",
+        "kind": "note",
+        "title": "Weekly retrieval log",
+        "summary": "Mixed-source retrieval helps with planning questions when note coverage is sparse.",
+        "updatedAt": "2026-04-15"
+      },
+      {
+        "id": "paper-1",
+        "kind": "paper",
+        "title": "Grounded Planning for Research Agents",
+        "summary": "Suggests separating durable memory from short-horizon planning context.",
+        "updatedAt": "2026-04-10"
+      },
+      {
+        "id": "code-1",
+        "kind": "code_summary",
+        "title": "Retriever prototype summary",
+        "summary": "Current prototype ranks chunks with a simple lexical match and needs source-aware scoring.",
+        "updatedAt": "2026-04-14"
+      }
+    ]
+  },
+  {
+    "id": "literature-synthesis",
+    "name": "Literature Synthesis Workflow",
+    "slug": "literature-synthesis-workflow",
+    "tagline": "Turn reading notes into project decisions instead of disconnected summaries.",
+    "status": "planning",
+    "objective": "Design a repeatable workflow for linking paper insights to active experiments and code changes.",
+    "summary": "This workspace tracks how papers should influence project direction, metrics, baselines, and concrete implementation decisions inside Research Brain.",
+    "updatedAt": "2026-04-12",
+    "notesCount": 2,
+    "papersCount": 5,
+    "codeSummaryCount": 1,
+    "tags": ["papers", "workflow", "memory"],
+    "memory": {
+      "canonical": [
+        "Paper summaries are not sufficient unless they change the active project plan.",
+        "The workflow should point to a code or experiment consequence."
+      ],
+      "episodic": [
+        "Collected examples where paper notes never changed the actual roadmap.",
+        "Defined the need for a project-aware paper linking layer."
+      ],
+      "action": {
+        "nextStep": "Draft one project-aware paper review template and test it on two recent papers.",
+        "prerequisites": ["Choose target project", "Select two representative papers"]
+      }
+    },
+    "contextSources": [
+      {
+        "id": "note-2",
+        "kind": "note",
+        "title": "Paper linking notes",
+        "summary": "Most reading workflows fail because they do not name what should be built or measured next.",
+        "updatedAt": "2026-04-12"
+      },
+      {
+        "id": "paper-2",
+        "kind": "paper",
+        "title": "Scientific Workflow Memory Systems",
+        "summary": "Shows that stable project memory improves continuity across research sessions.",
+        "updatedAt": "2026-04-08"
+      }
+    ]
+  }
+]
