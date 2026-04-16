@@ -7,7 +7,7 @@ import type {
   ProjectContextBundle,
   ProjectMemoryRecord,
 } from "@/lib/memory/schema";
-import type { Project } from "@/lib/types";
+import type { AssistanceMode, ChatQuestionMode, Project } from "@/lib/types";
 
 const PROJECTS_PATH = path.join(process.cwd(), "data", "projects.json");
 
@@ -146,6 +146,65 @@ export interface ProjectRetrievalProfile {
   nextStep: string;
   goals: string[];
   evaluationCriteria: string[];
+}
+
+export interface SessionMemorySummary {
+  date: string;
+  userQuestion: string;
+  questionMode: ChatQuestionMode;
+  assistanceMode: AssistanceMode;
+  recommended: string;
+  blockersReferenced: string[];
+  matchedSourceTitles: string[];
+  proposedNextStep: string;
+}
+
+function summarizeQuestion(question: string): string {
+  return question.trim().replace(/\s+/g, " ").slice(0, 180);
+}
+
+function toSessionEpisodicEntry(summary: SessionMemorySummary): EpisodicMemoryEntry {
+  return {
+    date: summary.date,
+    attempted: [`Answered user question: ${summarizeQuestion(summary.userQuestion)}`],
+    changed: [
+      `Question mode: ${summary.questionMode}`,
+      `Assistance mode: ${summary.assistanceMode}`,
+      `Recommended: ${summary.recommended}`,
+      `Proposed next step: ${summary.proposedNextStep}`,
+    ],
+    failed: summary.blockersReferenced.map((blocker) => `Referenced blocker: ${blocker}`),
+    learned: summary.matchedSourceTitles.length
+      ? [`Grounded response used sources: ${summary.matchedSourceTitles.join(", ")}`]
+      : ["Grounded response relied mostly on stored project memory because strong local source evidence was limited."],
+    filesTouched: [],
+    references: [],
+  };
+}
+
+export function shouldWriteSessionMemory(summary: SessionMemorySummary): boolean {
+  const meaningfulModes: ChatQuestionMode[] = ["next_step", "why_next_step", "worker_handoff"];
+
+  if (meaningfulModes.includes(summary.questionMode)) {
+    return true;
+  }
+
+  if (summary.blockersReferenced.length > 0 || summary.matchedSourceTitles.length > 0) {
+    return true;
+  }
+
+  return summary.userQuestion.trim().split(/\s+/).length >= 8;
+}
+
+export async function appendSessionMemorySummary(
+  projectId: string,
+  summary: SessionMemorySummary,
+): Promise<ProjectMemoryRecord | null> {
+  if (!shouldWriteSessionMemory(summary)) {
+    return readAllMemoryForProject(projectId);
+  }
+
+  return appendEpisodicMemory(projectId, toSessionEpisodicEntry(summary));
 }
 
 export async function deriveProjectRetrievalProfile(projectId: string): Promise<ProjectRetrievalProfile | null> {

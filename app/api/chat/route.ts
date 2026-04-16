@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { getProjectById } from "@/lib/db";
-import { deriveProjectContextBundle, getLatestEpisodicMemory } from "@/lib/memory/memoryStore";
+import {
+  appendSessionMemorySummary,
+  deriveProjectContextBundle,
+  getLatestEpisodicMemory,
+} from "@/lib/memory/memoryStore";
 import { searchProjectContext } from "@/lib/retrieval/search";
 import { decideWorker } from "@/lib/routing/decideWorker";
 import type { AssistanceMode, ChatQuestionMode, ChatRequest, ChatResponse } from "@/lib/types";
@@ -348,6 +352,36 @@ function buildFollowUpQuestions(params: {
   return questions.slice(0, 4);
 }
 
+function buildSessionSummary(params: {
+  now: string;
+  userQuestion: string;
+  questionMode: ChatQuestionMode;
+  assistanceMode: AssistanceMode;
+  recommendedNextStep: string;
+  blockers: string[];
+  matchedSources: ChatResponse["matched_sources"];
+}): {
+  date: string;
+  userQuestion: string;
+  questionMode: ChatQuestionMode;
+  assistanceMode: AssistanceMode;
+  recommended: string;
+  blockersReferenced: string[];
+  matchedSourceTitles: string[];
+  proposedNextStep: string;
+} {
+  return {
+    date: params.now,
+    userQuestion: params.userQuestion,
+    questionMode: params.questionMode,
+    assistanceMode: params.assistanceMode,
+    recommended: params.recommendedNextStep,
+    blockersReferenced: params.blockers.slice(0, 3),
+    matchedSourceTitles: params.matchedSources.map((source) => source.title).slice(0, 4),
+    proposedNextStep: params.recommendedNextStep,
+  };
+}
+
 export async function POST(request: Request) {
   const body = (await request.json()) as ChatRequest;
   const [project, contextBundle, latestEpisode] = await Promise.all([
@@ -430,6 +464,18 @@ export async function POST(request: Request) {
       matchedSources,
     }),
   };
+
+  const sessionSummary = buildSessionSummary({
+    now: new Date().toISOString(),
+    userQuestion: body.message,
+    questionMode,
+    assistanceMode,
+    recommendedNextStep,
+    blockers,
+    matchedSources,
+  });
+
+  await appendSessionMemorySummary(project.id, sessionSummary);
 
   // TODO: Replace deterministic response construction with model-based generation that preserves this response shape.
   return NextResponse.json(response);

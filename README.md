@@ -206,6 +206,15 @@ Research Brain now defaults to a dark mode theme with a calm pixel-space atmosph
 
 The goal of the theme is not decoration. It is to make the workspace feel focused, slightly distinctive, and demo-ready without distracting from project evidence and reasoning.
 
+## Session Memory Write-Back
+
+Research Brain can now persist a compact session summary after a meaningful grounded response.
+
+- the chat route builds a deterministic session summary with the date, user question, question mode, assistance mode, recommended action, referenced blockers, matched source titles, and proposed next step
+- `lib/memory/memoryStore.ts` converts that summary into a new episodic memory entry and appends it to the active project in `data/projects.json`
+- trivial interactions are skipped; write-back only happens when the response is materially useful, such as next-step, why-next-step, or worker-handoff questions, or when blockers or matched evidence are present
+- the write-back path stays local-only and deterministic so it can later be swapped for model-generated summaries without changing the persistence boundary
+
 ## Getting Started
 
 ```bash
