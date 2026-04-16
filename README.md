@@ -84,6 +84,19 @@ The project chat UI shows the structure of the grounded response instead of hidi
 
 This makes the system legible in a short demo: the user can see both the recommendation and the evidence behind it.
 
+## Fast Demo Flow
+
+For a 60-90 second walkthrough, open any project workspace and use the quick actions above the chat input:
+
+1. Click `What should I do next?`
+2. Show the current status, blockers, recommended next step, and matched local sources
+3. Click `Why is that the next step?`
+4. Point to the `Why This Follows` section to show that the answer comes from stored project memory
+5. Click `Should this go to Chat or Codex?`
+6. End on the worker decision, worker reason, and suggested skill
+
+This sequence shows the core Research Brain value quickly: grounded project state, visible evidence, and clear routing between reasoning and execution.
+
 ## Getting Started
 
 ```bash

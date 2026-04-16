@@ -7,6 +7,12 @@ interface ChatPanelProps {
   project: Project;
 }
 
+const quickActions = [
+  "What should I do next?",
+  "Why is that the next step?",
+  "Should this go to Chat or Codex?",
+] as const;
+
 type ChatTurn =
   | {
       role: "user";
@@ -31,12 +37,14 @@ export function ChatPanel({ project }: ChatPanelProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function onSubmit() {
-    if (!draft.trim()) {
+  async function submitMessage(rawMessage: string) {
+    const message = rawMessage.trim();
+
+    if (!message) {
       return;
     }
 
-    const nextMessages = [...messages, { role: "user" as const, content: draft.trim() }];
+    const nextMessages = [...messages, { role: "user" as const, content: message }];
     setMessages(nextMessages);
     setDraft("");
     setIsLoading(true);
@@ -48,7 +56,7 @@ export function ChatPanel({ project }: ChatPanelProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           projectId: project.id,
-          message: draft.trim(),
+          message,
           history: nextMessages,
         }),
       });
@@ -71,6 +79,15 @@ export function ChatPanel({ project }: ChatPanelProps) {
     } finally {
       setIsLoading(false);
     }
+  }
+
+  async function onSubmit() {
+    await submitMessage(draft);
+  }
+
+  async function onQuickAction(action: string) {
+    setDraft(action);
+    await submitMessage(action);
   }
 
   function renderAssistantResponse(response: ChatResponse) {
@@ -169,6 +186,23 @@ export function ChatPanel({ project }: ChatPanelProps) {
     <section className="panel">
       <h3>Research Chat</h3>
       <p className="muted">Grounded in this project&apos;s memory, notes, papers, and code summaries.</p>
+      <div style={{ marginTop: 16, display: "grid", gap: 10 }}>
+        <strong>Quick Actions</strong>
+        <div className="pill-row">
+          {quickActions.map((action) => (
+            <button
+              className="pill accent"
+              disabled={isLoading}
+              key={action}
+              onClick={() => void onQuickAction(action)}
+              style={{ cursor: isLoading ? "not-allowed" : "pointer", background: "var(--accent-soft)" }}
+              type="button"
+            >
+              {action}
+            </button>
+          ))}
+        </div>
+      </div>
       <div className="chat-thread">
         {messages.map((message, index) => (
           <div key={`${message.role}-${index}`} className={`chat-bubble ${message.role}`}>
