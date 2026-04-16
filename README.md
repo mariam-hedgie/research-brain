@@ -86,6 +86,7 @@ This keeps the quick actions grounded in the same project memory and local sourc
 Research Brain now varies grounded responses along two axes:
 
 - question intent:
+  - `compare_perspectives`
   - `next_step`
   - `why_next_step`
   - `worker_handoff`
@@ -96,6 +97,16 @@ Research Brain now varies grounded responses along two axes:
   - `do` for a more complete artifact such as a task brief, rationale outline, or handoff payload
 
 The same project memory and local evidence are reused across modes, but the wording and structure now change meaningfully based on both the question and the selected level of assistance.
+
+## Compare Perspectives Mode
+
+Research Brain now supports a deterministic `compare_perspectives` mode for questions that need competing viewpoints.
+
+- trigger examples include `compare arguments`, `opposing views`, `different perspectives`, `debate this`, `historiography`, and `compare methods`
+- the chat route uses local matched evidence first, then combines it with blockers, recent project history, and canonical goals
+- the response includes a structured table with `position`, `main claim`, `supporting evidence`, `source(s)`, and `limitations or counterpoints`
+- the UI renders that table directly in the chat response so the comparison stays legible during a demo instead of collapsing into another paragraph
+- if opposing evidence is weak, the limitations column says so directly rather than inventing a stronger debate than the local sources support
 
 ## Current Retrieval Strategy
 

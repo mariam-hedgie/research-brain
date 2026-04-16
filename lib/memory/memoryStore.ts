@@ -183,7 +183,7 @@ function toSessionEpisodicEntry(summary: SessionMemorySummary): EpisodicMemoryEn
 }
 
 export function shouldWriteSessionMemory(summary: SessionMemorySummary): boolean {
-  const meaningfulModes: ChatQuestionMode[] = ["next_step", "why_next_step", "worker_handoff"];
+  const meaningfulModes: ChatQuestionMode[] = ["compare_perspectives", "next_step", "why_next_step", "worker_handoff"];
 
   if (meaningfulModes.includes(summary.questionMode)) {
     return true;

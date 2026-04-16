@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { ContextSources } from "@/components/ContextSources";
-import type { AssistanceMode, ChatResponse, Project } from "@/lib/types";
+import type { AssistanceMode, ChatResponse, ComparisonPerspectiveRow, Project } from "@/lib/types";
 
 interface ChatPanelProps {
   project: Project;
@@ -31,6 +31,52 @@ const starterMessages: ChatTurn[] = [
     content: "I can explain the current state of this project, pull in local context, and suggest when a Codex handoff makes sense.",
   },
 ];
+
+function renderComparisonTable(rows: ComparisonPerspectiveRow[]) {
+  return (
+    <div style={{ overflowX: "auto" }}>
+      <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 760 }}>
+        <thead>
+          <tr>
+            {["Position", "Main Claim", "Supporting Evidence", "Source(s)", "Limitations or Counterpoints"].map((label) => (
+              <th
+                key={label}
+                style={{
+                  textAlign: "left",
+                  padding: "10px 12px",
+                  borderBottom: "1px solid var(--border)",
+                  color: "var(--muted)",
+                  fontSize: "0.8rem",
+                  letterSpacing: "0.08em",
+                  textTransform: "uppercase",
+                }}
+              >
+                {label}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row) => (
+            <tr key={`${row.position}-${row.main_claim}`}>
+              <td style={{ padding: "12px", borderBottom: "1px solid var(--border-soft)", verticalAlign: "top" }}>
+                <strong>{row.position}</strong>
+              </td>
+              <td style={{ padding: "12px", borderBottom: "1px solid var(--border-soft)", verticalAlign: "top" }}>{row.main_claim}</td>
+              <td style={{ padding: "12px", borderBottom: "1px solid var(--border-soft)", verticalAlign: "top" }}>{row.supporting_evidence}</td>
+              <td style={{ padding: "12px", borderBottom: "1px solid var(--border-soft)", verticalAlign: "top" }}>
+                {row.sources.join(", ")}
+              </td>
+              <td style={{ padding: "12px", borderBottom: "1px solid var(--border-soft)", verticalAlign: "top" }}>
+                {row.limitations_or_counterpoints}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
 
 export function ChatPanel({ project }: ChatPanelProps) {
   const [draft, setDraft] = useState("");
@@ -119,6 +165,15 @@ export function ChatPanel({ project }: ChatPanelProps) {
           <strong>Recommended Next Step</strong>
           <p style={{ margin: 0 }}>{response.recommended_next_step}</p>
         </div>
+
+        {response.comparison_table ? (
+          <div>
+            <strong>Compare Perspectives</strong>
+            <div className="state-box" style={{ marginTop: 8 }}>
+              {renderComparisonTable(response.comparison_table)}
+            </div>
+          </div>
+        ) : null}
 
         <div style={{ display: "grid", gap: 10 }}>
           <div>

@@ -7,10 +7,28 @@ import {
 } from "@/lib/memory/memoryStore";
 import { searchProjectContext } from "@/lib/retrieval/search";
 import { decideWorker } from "@/lib/routing/decideWorker";
-import type { AssistanceMode, ChatQuestionMode, ChatRequest, ChatResponse } from "@/lib/types";
+import type {
+  AssistanceMode,
+  ChatQuestionMode,
+  ChatRequest,
+  ChatResponse,
+  ComparisonPerspectiveRow,
+} from "@/lib/types";
 
 function classifyQuestionMode(message: string): ChatQuestionMode {
   const normalized = message.trim().toLowerCase();
+
+  if (
+    normalized.includes("compare arguments") ||
+    normalized.includes("opposing views") ||
+    normalized.includes("different perspectives") ||
+    normalized.includes("debate this") ||
+    normalized.includes("historiography") ||
+    normalized.includes("compare methods") ||
+    (normalized.includes("compare") && normalized.includes("perspectives"))
+  ) {
+    return "compare_perspectives";
+  }
 
   if (
     normalized.includes("why is that the next step") ||
@@ -73,6 +91,80 @@ function findEvidenceByType(
   sourceType: ChatResponse["matched_sources"][number]["source_type"],
 ) {
   return matchedSources.find((source) => source.source_type === sourceType);
+}
+
+function formatSourceLabel(source: ChatResponse["matched_sources"][number]): string {
+  if (source.filepath && source.line_start && source.line_end) {
+    return `${source.title} (${source.filepath}:${source.line_start}-${source.line_end})`;
+  }
+
+  if (source.filepath) {
+    return `${source.title} (${source.filepath})`;
+  }
+
+  return source.title;
+}
+
+function buildComparisonTable(params: {
+  projectName: string;
+  matchedSources: ChatResponse["matched_sources"];
+  blockers: string[];
+  recentFailedAttempts: string[];
+  goals: string[];
+  recommendedNextStep: string;
+}): ComparisonPerspectiveRow[] {
+  const rows: ComparisonPerspectiveRow[] = [];
+  const topSources = params.matchedSources.slice(0, 3);
+
+  if (topSources[0]) {
+    rows.push({
+      position: "Primary argument",
+      main_claim: `The strongest local evidence points toward ${topSources[0].source_type.replace("_", " ")}-backed progress on this question in ${params.projectName}.`,
+      supporting_evidence: topSources[0].snippet,
+      sources: [formatSourceLabel(topSources[0])],
+      limitations_or_counterpoints:
+        params.blockers[0] ??
+        "This position is only as strong as the current top-ranked local source, so broader evidence may still be missing.",
+    });
+  }
+
+  if (topSources[1] || params.blockers[0] || params.recentFailedAttempts[0]) {
+    rows.push({
+      position: "Opposing perspective",
+      main_claim:
+        params.blockers[0] ??
+        "A competing view is that the current evidence is incomplete or that the project should avoid overcommitting to one interpretation yet.",
+      supporting_evidence:
+        topSources[1]?.snippet ??
+        params.recentFailedAttempts[0] ??
+        "Recent project history does not provide a strong second source, which weakens the opposition case.",
+      sources: topSources[1]
+        ? [formatSourceLabel(topSources[1])]
+        : params.recentFailedAttempts[0]
+          ? ["episodic_memory:recent_session_1"]
+          : ["local evidence is sparse"],
+      limitations_or_counterpoints:
+        "This opposing view may reflect project constraints more than a fully developed alternative theory or method.",
+    });
+  }
+
+  rows.push({
+    position: "Working synthesis",
+    main_claim:
+      params.goals[0] ??
+      `The most defensible move is to compare the strongest available local evidence against the main constraint before committing further.`,
+    supporting_evidence:
+      topSources.length > 1
+        ? `The top matches do not fully agree in emphasis, so the project should use ${params.recommendedNextStep.toLowerCase()} as the practical synthesis.`
+        : `There is not enough opposing local evidence, so the synthesis remains provisional and should be tested against more sources.`,
+    sources: topSources.length > 0 ? topSources.map((source) => formatSourceLabel(source)) : ["canonical_memory", "action_memory"],
+    limitations_or_counterpoints:
+      topSources.length > 1
+        ? "This synthesis is still deterministic and local-only; it is not yet a full historiographic or argumentative analysis."
+        : "Because local evidence is thin, this synthesis should be treated as a scaffold rather than a settled comparison.",
+  });
+
+  return rows;
 }
 
 function buildWhyThisFollows(params: {
@@ -160,6 +252,14 @@ function buildModeSpecificAnswer(params: {
   const primaryGoal = params.goals[0];
 
   if (params.assistanceMode === "help") {
+    if (params.mode === "compare_perspectives") {
+      return [
+        `Comparison mode is active.`,
+        `I organized the strongest local viewpoint, the main counterpressure, and a working synthesis in a table.`,
+        evidenceSentence,
+      ].join(" ");
+    }
+
     if (params.mode === "next_step") {
       return [
         `Next step: ${params.recommendedNextStep}.`,
@@ -207,6 +307,14 @@ function buildModeSpecificAnswer(params: {
   }
 
   if (params.assistanceMode === "teach") {
+    if (params.mode === "compare_perspectives") {
+      return [
+        `This comparison is grounded in local project evidence first, then balanced against project blockers and goals.`,
+        `The table separates a primary argument, an opposing perspective, and a synthesis so the viewpoints do not collapse into one summary.`,
+        evidenceSentence,
+      ].join(" ");
+    }
+
     if (params.mode === "next_step") {
       return [
         `${params.projectName} is currently ${params.currentStatus}, so the next step should reduce uncertainty without widening scope.`,
@@ -253,6 +361,15 @@ function buildModeSpecificAnswer(params: {
       `${params.projectName} is currently ${params.currentStatus}.`,
       `The recommended next step is ${params.recommendedNextStep}.`,
       `This is a balanced answer that combines project memory, matched local evidence, and worker routing when relevant.`,
+      evidenceSentence,
+    ].join(" ");
+  }
+
+  if (params.mode === "compare_perspectives") {
+    return [
+      `Comparison brief:`,
+      `The table below lays out a primary position, an opposing perspective, and a working synthesis using local evidence from this project.`,
+      `If the evidence is thin, the limitations column says so directly.`,
       evidenceSentence,
     ].join(" ");
   }
@@ -315,7 +432,12 @@ function buildFollowUpQuestions(params: {
   matchedSources: ChatResponse["matched_sources"];
 }): string[] {
   const questions =
-    params.mode === "next_step"
+    params.mode === "compare_perspectives"
+      ? [
+          "Do you want me to turn this into a tighter literature or historiography comparison?",
+          "Should I compare only papers, only notes, or only code-summary evidence?",
+        ]
+      : params.mode === "next_step"
       ? [
           "Do you want this next step broken into a 30-45 minute work session?",
           "Should I turn the prerequisites into a short checklist?",
@@ -424,6 +546,17 @@ export async function POST(request: Request) {
     goals: contextBundle.canonical.goals,
   });
   const latestAttempt = latestEpisode?.attempted[0];
+  const comparisonTable =
+    questionMode === "compare_perspectives"
+      ? buildComparisonTable({
+          projectName: project.name,
+          matchedSources,
+          blockers,
+          recentFailedAttempts,
+          goals: contextBundle.canonical.goals,
+          recommendedNextStep,
+        })
+      : null;
 
   const response: ChatResponse = {
     question_mode: questionMode,
@@ -457,6 +590,7 @@ export async function POST(request: Request) {
     worker_reason: worker.reason,
     suggested_skill: worker.suggested_skill,
     matched_sources: matchedSources,
+    comparison_table: comparisonTable,
     follow_up_questions: buildFollowUpQuestions({
       mode: questionMode,
       workerType: worker.worker_type,

@@ -43,6 +43,7 @@ export interface ChatRequest {
 }
 
 export type ChatQuestionMode =
+  | "compare_perspectives"
   | "next_step"
   | "why_next_step"
   | "worker_handoff"
@@ -65,6 +66,14 @@ export interface MatchedContextSource {
   score: number;
 }
 
+export interface ComparisonPerspectiveRow {
+  position: string;
+  main_claim: string;
+  supporting_evidence: string;
+  sources: string[];
+  limitations_or_counterpoints: string;
+}
+
 export interface ChatResponse {
   question_mode: ChatQuestionMode;
   assistance_mode: AssistanceMode;
@@ -80,6 +89,7 @@ export interface ChatResponse {
   worker_reason: string;
   suggested_skill: string | null;
   matched_sources: MatchedContextSource[];
+  comparison_table: ComparisonPerspectiveRow[] | null;
   follow_up_questions: string[];
 }
 
