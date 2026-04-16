@@ -8,6 +8,7 @@ export function ContextSources({ sources }: ContextSourcesProps) {
   return (
     <section className="source-card">
       <h3>Context Sources</h3>
+      <p className="muted">These are the local project sources Research Brain can search when grounding a response.</p>
       {sources.length === 0 ? (
         <div className="empty-state">
           <p>No local sources are connected to this project yet.</p>

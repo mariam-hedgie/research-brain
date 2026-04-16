@@ -1,13 +1,24 @@
 "use client";
 
 import { useState } from "react";
-import type { ChatMessage, ChatResponse, Project } from "@/lib/types";
+import type { ChatResponse, Project } from "@/lib/types";
 
 interface ChatPanelProps {
   project: Project;
 }
 
-const starterMessages: ChatMessage[] = [
+type ChatTurn =
+  | {
+      role: "user";
+      content: string;
+    }
+  | {
+      role: "assistant";
+      content: string;
+      response?: ChatResponse;
+    };
+
+const starterMessages: ChatTurn[] = [
   {
     role: "assistant",
     content: "I can explain the current state of this project, pull in local context, and suggest when a Codex handoff makes sense.",
@@ -16,7 +27,7 @@ const starterMessages: ChatMessage[] = [
 
 export function ChatPanel({ project }: ChatPanelProps) {
   const [draft, setDraft] = useState("");
-  const [messages, setMessages] = useState<ChatMessage[]>(starterMessages);
+  const [messages, setMessages] = useState<ChatTurn[]>(starterMessages);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -47,12 +58,111 @@ export function ChatPanel({ project }: ChatPanelProps) {
       }
 
       const data = (await response.json()) as ChatResponse;
-      setMessages((current) => [...current, { role: "assistant", content: data.answer }]);
+      setMessages((current) => [
+        ...current,
+        {
+          role: "assistant",
+          content: data.answer,
+          response: data,
+        },
+      ]);
     } catch (submissionError) {
       setError(submissionError instanceof Error ? submissionError.message : "Unknown error");
     } finally {
       setIsLoading(false);
     }
+  }
+
+  function renderAssistantResponse(response: ChatResponse) {
+    return (
+      <div style={{ display: "grid", gap: 14 }}>
+        <p style={{ margin: 0 }}>{response.answer}</p>
+
+        <div className="pill-row">
+          <span className={`pill ${response.worker_type === "codex" ? "" : "accent"}`}>Worker: {response.worker_type}</span>
+          <span className="pill accent">Status: {response.current_status}</span>
+          <span className="pill">{response.suggested_skill ?? "No suggested skill"}</span>
+        </div>
+
+        <div className="state-box" style={{ display: "grid", gap: 10 }}>
+          <strong>Recommended Next Step</strong>
+          <p style={{ margin: 0 }}>{response.recommended_next_step}</p>
+        </div>
+
+        <div style={{ display: "grid", gap: 10 }}>
+          <div>
+            <strong>Why This Follows</strong>
+            <ul className="meta-list" style={{ marginTop: 8 }}>
+              {response.why_this_follows.map((reason) => (
+                <li key={reason}>{reason}</li>
+              ))}
+            </ul>
+          </div>
+
+          <div>
+            <strong>Blockers</strong>
+            {response.blockers.length === 0 ? (
+              <div className="empty-state" style={{ marginTop: 8 }}>
+                <p>No blockers are stored for this project right now.</p>
+              </div>
+            ) : (
+              <ul className="meta-list" style={{ marginTop: 8 }}>
+                {response.blockers.map((blocker) => (
+                  <li key={blocker}>{blocker}</li>
+                ))}
+              </ul>
+            )}
+          </div>
+
+          <div>
+            <strong>Worker Decision</strong>
+            <div className="state-box" style={{ marginTop: 8, display: "grid", gap: 6 }}>
+              <p style={{ margin: 0 }}>
+                <strong>Route:</strong> {response.worker_type === "codex" ? "Codex execution" : "Chat reasoning"}
+              </p>
+              <p style={{ margin: 0 }}>
+                <strong>Why:</strong> {response.worker_reason}
+              </p>
+              <p style={{ margin: 0 }}>
+                <strong>Suggested skill:</strong> {response.suggested_skill ?? "None"}
+              </p>
+            </div>
+          </div>
+
+          <div>
+            <strong>Matched Local Sources</strong>
+            {response.matched_sources.length === 0 ? (
+              <div className="empty-state" style={{ marginTop: 8 }}>
+                <p>No local sources matched this question strongly.</p>
+              </div>
+            ) : (
+              <ul className="source-list" style={{ marginTop: 8 }}>
+                {response.matched_sources.map((source) => (
+                  <li key={`${source.project}-${source.title}`} className="source-item">
+                    <div className="pill-row">
+                      <span className="pill accent">{source.source_type}</span>
+                      <span className="pill">Score {source.score}</span>
+                      <span className="pill">{source.date ?? "No date"}</span>
+                    </div>
+                    <h3>{source.title}</h3>
+                    <p>{source.snippet}</p>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+
+          <div>
+            <strong>Follow-Up Questions</strong>
+            <ul className="meta-list" style={{ marginTop: 8 }}>
+              {response.follow_up_questions.map((question) => (
+                <li key={question}>{question}</li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -62,7 +172,7 @@ export function ChatPanel({ project }: ChatPanelProps) {
       <div className="chat-thread">
         {messages.map((message, index) => (
           <div key={`${message.role}-${index}`} className={`chat-bubble ${message.role}`}>
-            {message.content}
+            {message.role === "assistant" && message.response ? renderAssistantResponse(message.response) : message.content}
           </div>
         ))}
         {isLoading ? (

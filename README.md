@@ -70,6 +70,20 @@ Research Brain uses a deterministic local-only ranker in `lib/retrieval/search.t
 
 Each ranked result returns `title`, `source_type`, `project`, `date`, `snippet`, and `score`. The goal is not perfect search; the goal is convincing project-aware retrieval for the MVP demo while keeping the ranking logic readable enough to swap later for embedding-based retrieval.
 
+## What the user sees in a grounded Research Brain response
+
+The project chat UI shows the structure of the grounded response instead of hiding it behind one assistant paragraph.
+
+- the current project status
+- any stored blockers
+- one recommended next step
+- why that recommendation follows from project memory and matched sources
+- whether the request should stay in Chat or go to Codex
+- the worker reason and suggested skill
+- the matched local sources that informed the answer
+
+This makes the system legible in a short demo: the user can see both the recommendation and the evidence behind it.
+
 ## Getting Started
 
 ```bash
