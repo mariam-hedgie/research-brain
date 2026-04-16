@@ -1,0 +1,2 @@
+# This project currently runs on Next.js/TypeScript.
+# Keep Python dependencies here only when local scripts or tooling are added.
