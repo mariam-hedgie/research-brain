@@ -53,6 +53,9 @@ export interface MatchedContextSource {
   project: string;
   date: string | null;
   filepath: string | null;
+  location: string;
+  line_start: number | null;
+  line_end: number | null;
   snippet: string;
   score: number;
 }

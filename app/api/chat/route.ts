@@ -45,8 +45,23 @@ function formatMatchedSources(matchedSources: ChatResponse["matched_sources"]): 
   }
 
   return `Matched local evidence: ${matchedSources
-    .map((source) => `${source.title} (${source.source_type}, score ${source.score})`)
+    .map((source) => `${source.title} (${source.source_type}, score ${source.score}, ${source.location})`)
     .join(", ")}.`;
+}
+
+function describeEvidenceLocation(source: ChatResponse["matched_sources"][number]): string {
+  if (source.filepath && source.line_start && source.line_end) {
+    return `${source.filepath}:${source.line_start}-${source.line_end}`;
+  }
+
+  return source.location;
+}
+
+function findEvidenceByType(
+  matchedSources: ChatResponse["matched_sources"],
+  sourceType: ChatResponse["matched_sources"][number]["source_type"],
+) {
+  return matchedSources.find((source) => source.source_type === sourceType);
 }
 
 function buildWhyThisFollows(params: {
@@ -55,30 +70,57 @@ function buildWhyThisFollows(params: {
   blockers: string[];
   recommendedNextStep: string;
   matchedSources: ChatResponse["matched_sources"];
+  recentFailedAttempts: string[];
   recentLearnings: string[];
   goals: string[];
 }): string[] {
-  const reasons = [
-    `${params.projectName} is currently ${params.currentStatus}, so the answer should stay anchored to the current project state rather than a generic research workflow.`,
-    `The stored next step is "${params.recommendedNextStep}", which already reflects the project's action memory.`,
-  ];
+  const reasons: string[] = [];
 
   if (params.blockers.length > 0) {
-    reasons.push(`The main blocker is ${params.blockers[0]}, so the recommendation stays narrow and execution-focused.`);
+    reasons.push(
+      `Action memory blocker: "${params.blockers[0]}" from \`action_memory:blocker_1\` is constraining the plan, so the recommendation stays focused on unblocking that path.`,
+    );
+  }
+
+  if (params.recentFailedAttempts.length > 0) {
+    reasons.push(
+      `Recent failed attempt: "${params.recentFailedAttempts[0]}" from \`episodic_memory:recent_session_1\` shows where the last approach broke down.`,
+    );
   }
 
   if (params.recentLearnings.length > 0) {
-    reasons.push(`Recent session learning: ${params.recentLearnings[0]}.`);
+    reasons.push(`Recent episodic learning: "${params.recentLearnings[0]}" reinforces why this step is more grounded than a generic next action.`);
   }
 
-  if (params.matchedSources.length > 0) {
-    reasons.push(`The recommendation is supported by ${params.matchedSources.map((source) => source.title).join(", ")}.`);
-  } else {
-    reasons.push(`Source evidence is weak, so this response relies more heavily on canonical and action memory than on matched local context.`);
+  const paperEvidence = findEvidenceByType(params.matchedSources, "paper");
+  if (paperEvidence) {
+    reasons.push(
+      `Paper finding: "${paperEvidence.snippet}" from ${describeEvidenceLocation(paperEvidence)} supports the planning logic behind this recommendation.`,
+    );
+  }
+
+  const codeEvidence = findEvidenceByType(params.matchedSources, "code_summary");
+  if (codeEvidence) {
+    reasons.push(
+      `Implementation constraint: "${codeEvidence.snippet}" from ${describeEvidenceLocation(codeEvidence)} shows the current repo or tooling limitation the next step needs to respect.`,
+    );
+  }
+
+  const noteEvidence = findEvidenceByType(params.matchedSources, "note");
+  if (noteEvidence) {
+    reasons.push(
+      `Local note evidence: "${noteEvidence.snippet}" from ${describeEvidenceLocation(noteEvidence)} ties the recommendation to recent project work rather than a generic research pattern.`,
+    );
   }
 
   if (params.goals.length > 0) {
-    reasons.push(`This also aligns with the current goal "${params.goals[0]}".`);
+    reasons.push(`Canonical goal: "${params.goals[0]}" from \`canonical_memory:goal_1\` defines the longer-horizon objective this recommendation serves.`);
+  }
+
+  if (reasons.length === 0) {
+    reasons.push(
+      `Evidence is sparse: there is not enough blocker, episodic, or artifact support to make a stronger justification, so this recommendation relies mostly on stored action memory.`,
+    );
   }
 
   return reasons;
@@ -229,6 +271,7 @@ export async function POST(request: Request) {
   const estimatedMinutes = contextBundle.action.estimatedMinutes;
   const prerequisites = contextBundle.action.prerequisites;
   const successCriteria = contextBundle.action.successCriteria;
+  const recentFailedAttempts = latestEpisode?.failed ?? [];
   const recentLearnings = latestEpisode?.learned ?? [];
   const whyThisFollows = buildWhyThisFollows({
     projectName: project.name,
@@ -236,6 +279,7 @@ export async function POST(request: Request) {
     blockers,
     recommendedNextStep,
     matchedSources,
+    recentFailedAttempts,
     recentLearnings,
     goals: contextBundle.canonical.goals,
   });

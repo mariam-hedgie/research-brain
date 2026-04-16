@@ -125,12 +125,14 @@ function buildMemoryChunks(params: {
       projectId,
       title: `${projectName} project description`,
       body: contextBundle.canonical.description,
+      location: "canonical_memory:description",
     }),
     memoryFieldToChunk({
       id: `${projectId}:action-next-step`,
       projectId,
       title: `${projectName} next step`,
       body: contextBundle.action.recommendedNextStep,
+      location: "action_memory:recommended_next_step",
     }),
   ];
 
@@ -141,6 +143,7 @@ function buildMemoryChunks(params: {
         projectId,
         title: `${projectName} goal ${index + 1}`,
         body: goal,
+        location: `canonical_memory:goal_${index + 1}`,
       }),
     );
   });
@@ -152,6 +155,7 @@ function buildMemoryChunks(params: {
         projectId,
         title: `${projectName} blocker ${index + 1}`,
         body: blocker,
+        location: `action_memory:blocker_${index + 1}`,
       }),
     );
   });
@@ -170,6 +174,7 @@ function buildMemoryChunks(params: {
           ...episode.filesTouched,
         ].join(". "),
         date: episode.date,
+        location: `episodic_memory:recent_session_${index + 1}`,
       }),
     );
   });
@@ -244,6 +249,9 @@ function dedupeAndFormatResults(params: {
       project: params.projectName,
       date: chunk.date,
       filepath: chunk.filepath,
+      location: chunk.location,
+      line_start: chunk.lineStart,
+      line_end: chunk.lineEnd,
       snippet: chunk.snippet,
       score,
     });

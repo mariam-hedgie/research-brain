@@ -58,6 +58,18 @@ The chat API in `app/api/chat/route.ts` does not call an LLM. Instead, it builds
 
 The response includes the current status, blockers, one recommended next step, why that recommendation follows from stored memory, the suggested worker type, the suggested skill, matched local sources, and follow-up questions. If source matching is weak, the response says so explicitly instead of pretending the evidence is stronger than it is.
 
+## How recommendations are grounded in evidence
+
+`why_this_follows` is now built from concrete evidence categories rather than a generic justification.
+
+- blocker evidence comes from action memory
+- failed-attempt and learning evidence comes from recent episodic memory
+- paper findings come from matched local paper artifacts
+- implementation constraints come from matched code-summary artifacts
+- goal alignment comes from canonical memory
+
+When artifact evidence exists, the explanation includes the local filepath and line range for the matched chunk. When evidence is sparse, the response says that directly instead of overstating certainty.
+
 ## Why quick actions now produce different answers
 
 The chat route now classifies each question into a lightweight deterministic mode before building the response:

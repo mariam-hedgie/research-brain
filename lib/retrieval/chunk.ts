@@ -11,6 +11,9 @@ export interface RetrievalChunk {
   sourceType: RetrievalSourceType;
   date: string | null;
   filepath: string | null;
+  location: string;
+  lineStart: number | null;
+  lineEnd: number | null;
   rankSource: "artifact" | "memory" | "context_fallback";
 }
 
@@ -34,6 +37,9 @@ export function sourceToChunk(projectId: string, source: ContextSource): Retriev
     sourceType: source.kind,
     date: source.updatedAt ?? null,
     filepath: null,
+    location: `context_source:${source.id}`,
+    lineStart: null,
+    lineEnd: null,
     rankSource: "context_fallback",
   };
 }
@@ -79,40 +85,89 @@ function parseArtifactFile(fileContents: string): {
   };
 }
 
-function splitIntoParagraphChunks(text: string, maxLength = 420): string[] {
-  const paragraphs = text
-    .split(/\n\s*\n/)
-    .map((paragraph) => paragraph.trim())
-    .filter(Boolean);
+function splitIntoParagraphChunks(
+  text: string,
+  maxLength = 420,
+): Array<{ text: string; lineStart: number; lineEnd: number }> {
+  const lines = text.split(/\r?\n/);
+  const chunks: Array<{ text: string; lineStart: number; lineEnd: number }> = [];
+  let paragraphLines: string[] = [];
+  let paragraphStartLine = 1;
 
-  const chunks: string[] = [];
+  function flushParagraph(endLine: number) {
+    const paragraph = paragraphLines.join(" ").trim();
 
-  for (const paragraph of paragraphs) {
+    if (!paragraph) {
+      paragraphLines = [];
+      return;
+    }
+
     if (paragraph.length <= maxLength) {
-      chunks.push(paragraph);
-      continue;
+      chunks.push({
+        text: paragraph,
+        lineStart: paragraphStartLine,
+        lineEnd: endLine,
+      });
+      paragraphLines = [];
+      return;
     }
 
     const sentences = paragraph.match(/[^.!?]+[.!?]?/g) ?? [paragraph];
     let current = "";
+    let currentStart = paragraphStartLine;
+    let sentenceCursorLine = paragraphStartLine;
 
     for (const sentence of sentences) {
-      const candidate = current ? `${current} ${sentence.trim()}` : sentence.trim();
+      const trimmed = sentence.trim();
+      const candidate = current ? `${current} ${trimmed}` : trimmed;
 
       if (candidate.length > maxLength && current) {
-        chunks.push(current);
-        current = sentence.trim();
+        chunks.push({
+          text: current,
+          lineStart: currentStart,
+          lineEnd: endLine,
+        });
+        current = trimmed;
+        currentStart = sentenceCursorLine;
       } else {
         current = candidate;
       }
     }
 
     if (current) {
-      chunks.push(current);
+      chunks.push({
+        text: current,
+        lineStart: currentStart,
+        lineEnd: endLine,
+      });
     }
+
+    paragraphLines = [];
   }
 
-  return chunks.length > 0 ? chunks : [text.slice(0, maxLength).trim()].filter(Boolean);
+  lines.forEach((line, index) => {
+    const lineNumber = index + 1;
+
+    if (line.trim().length === 0) {
+      flushParagraph(lineNumber - 1);
+      paragraphStartLine = lineNumber + 1;
+      return;
+    }
+
+    if (paragraphLines.length === 0) {
+      paragraphStartLine = lineNumber;
+    }
+
+    paragraphLines.push(line);
+  });
+
+  flushParagraph(lines.length);
+
+  return chunks.length > 0
+    ? chunks
+    : text.trim().length > 0
+      ? [{ text: text.trim().slice(0, maxLength), lineStart: 1, lineEnd: lines.length }]
+      : [];
 }
 
 export async function loadArtifactDocuments(): Promise<ArtifactDocument[]> {
@@ -154,11 +209,14 @@ export function artifactToChunks(document: ArtifactDocument): RetrievalChunk[] {
     id: `${document.id}#${index + 1}`,
     projectId: document.projectId,
     title: document.title,
-    body: paragraph,
-    snippet: paragraph,
+    body: paragraph.text,
+    snippet: paragraph.text,
     sourceType: document.sourceType,
     date: document.date,
     filepath: document.filepath,
+    location: `${document.filepath}:${paragraph.lineStart}-${paragraph.lineEnd}`,
+    lineStart: paragraph.lineStart,
+    lineEnd: paragraph.lineEnd,
     rankSource: "artifact",
   }));
 }
@@ -169,6 +227,7 @@ export function memoryFieldToChunk(params: {
   title: string;
   body: string;
   date?: string | null;
+  location?: string;
 }): RetrievalChunk {
   return {
     id: params.id,
@@ -179,6 +238,9 @@ export function memoryFieldToChunk(params: {
     sourceType: "memory",
     date: params.date ?? null,
     filepath: null,
+    location: params.location ?? params.id,
+    lineStart: null,
+    lineEnd: null,
     rankSource: "memory",
   };
 }
